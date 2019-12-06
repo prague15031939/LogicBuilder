@@ -35,9 +35,7 @@ object frmMain: TfrmMain
     ShowHint = False
     OnMouseDown = pbMainMouseDown
     OnPaint = pbMainPaint
-    ExplicitLeft = 303
-    ExplicitWidth = 407
-    ExplicitHeight = 718
+    ExplicitLeft = 114
   end
   object tbMain: TToolBar
     Left = 0
@@ -53,8 +51,7 @@ object frmMain: TfrmMain
     object ToolButton1: TToolButton
       Left = 0
       Top = 0
-      Caption = 'ToolButton1'
-      ImageIndex = 0
+      Action = actTakeCursor
       Wrap = True
     end
     object ToolButton2: TToolButton
@@ -114,7 +111,7 @@ object frmMain: TfrmMain
     OnDblClick = lboxComponentsDblClick
   end
   object menuMain: TMainMenu
-    Left = 56
+    Left = 48
     Top = 336
     object File1: TMenuItem
       Caption = 'File'
@@ -136,6 +133,39 @@ object frmMain: TfrmMain
     end
     object Help1: TMenuItem
       Caption = 'Help'
+    end
+  end
+  object actlistMain: TActionList
+    Left = 80
+    Top = 336
+    object actTakeCursor: TAction
+      Category = 'Control'
+      Caption = 'actTakeCursor'
+      OnExecute = actTakeCursorExecute
+    end
+    object actMoveUp: TAction
+      Category = 'Control'
+      Caption = 'actMoveUp'
+      ShortCut = 87
+      OnExecute = actMoveUpExecute
+    end
+    object actMoveDown: TAction
+      Category = 'Control'
+      Caption = 'actMoveDown'
+      ShortCut = 83
+      OnExecute = actMoveDownExecute
+    end
+    object actMoveLeft: TAction
+      Category = 'Control'
+      Caption = 'actMoveLeft'
+      ShortCut = 65
+      OnExecute = actMoveLeftExecute
+    end
+    object actMoveRight: TAction
+      Category = 'Control'
+      Caption = 'actMoveRight'
+      ShortCut = 68
+      OnExecute = actMoveRightExecute
     end
   end
 end

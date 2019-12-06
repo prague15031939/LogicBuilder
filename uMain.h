@@ -11,6 +11,8 @@
 #include <Vcl.Menus.hpp>
 #include <Vcl.ComCtrls.hpp>
 #include <Vcl.ToolWin.hpp>
+#include <System.Actions.hpp>
+#include <Vcl.ActnList.hpp>
 #include <string>
 #include <cstdlib>
 //---------------------------------------------------------------------------
@@ -36,12 +38,23 @@ __published:	// IDE-managed Components
 	TToolButton *ToolButton1;
 	TToolButton *ToolButton2;
 	TToolButton *ToolButton4;
-	void __fastcall pbMainMouseDown(TObject *Sender, TMouseButton Button, TShiftState Shift,
-          int X, int Y);
+	TActionList *actlistMain;
+	TAction *actTakeCursor;
+	TAction *actMoveUp;
+	TAction *actMoveDown;
+	TAction *actMoveLeft;
+	TAction *actMoveRight;
 	void __fastcall btnDbgClick(TObject *Sender);
 	void __fastcall pbMainPaint(TObject *Sender);
 	void __fastcall FormCreate(TObject *Sender);
 	void __fastcall lboxComponentsDblClick(TObject *Sender);
+	void __fastcall actTakeCursorExecute(TObject *Sender);
+	void __fastcall pbMainMouseDown(TObject *Sender, TMouseButton Button, TShiftState Shift,
+		  int X, int Y);
+	void __fastcall actMoveUpExecute(TObject *Sender);
+	void __fastcall actMoveDownExecute(TObject *Sender);
+	void __fastcall actMoveLeftExecute(TObject *Sender);
+	void __fastcall actMoveRightExecute(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TfrmMain(TComponent* Owner);

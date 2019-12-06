@@ -12,22 +12,27 @@ Component component_array[100];
 static int component_array_pos = 0;
 int comp_width = 20, comp_height = 50, wire_length = 10, grid_width = 10;
 std::string current_component = "";
+bool cursor = true;
+int selected_comp = -1;
 //---------------------------------------------------------------------------
 __fastcall TfrmMain::TfrmMain(TComponent* Owner)
 	: TForm(Owner)
 {
 }
 
-bool valid_place(int x0, int y0){
+bool valid_place(int x0, int y0, int except = -1){
 	bool res = true;
 	for (int i = 0; i < component_array_pos; i++) {
+		if (i == except) {
+			continue;
+		}
 		int x, y;
 		x = component_array[i].get_x();
 		y = component_array[i].get_y();
 		if ((x0 >= x - wire_length && x0 <= x + comp_width + 2 * wire_length && y0 >= y && y0 <= y + comp_height) ||
-			(x0 + comp_width >= x - wire_length && x0 + comp_width <= x + comp_width + 2 * wire_length && y0 >= y && y0 <= y + comp_height) ||
+			(x0 + comp_width + wire_length >= x - wire_length && x0 + comp_width + wire_length <= x + comp_width + 2 * wire_length && y0 >= y && y0 <= y + comp_height) ||
 			(x0 >= x - wire_length && x0 <= x + comp_width + 2 * wire_length && y0 + comp_height >= y && y0 + comp_height <= y + comp_height) ||
-			(x0 + comp_width >= x - wire_length && x0 + comp_width <= x + comp_width + 2 * wire_length && y0 + comp_height >= y && y0 + comp_height <= y + comp_height)){
+			(x0 + comp_width + wire_length>= x - wire_length && x0 + comp_width + wire_length <= x + comp_width + 2 * wire_length && y0 + comp_height >= y && y0 + comp_height <= y + comp_height)){
 			res = false;
 		}
 	}
@@ -88,12 +93,63 @@ void add_component(int X, int Y){
 	}
 	else{
 		entity.set_type("not");
-        entity.set_entry_amount(1);
-    }
+		entity.set_entry_amount(1);
+	}
 	entity.set_coords(X, Y);
 	component_array[component_array_pos++] = entity;
 }
-//---------------------------------------------------------------------------
+
+void draw_highlight(TPaintBox *pb, int i){
+
+	pb -> Canvas -> Pen -> Color = clHighlight;
+	pb -> Canvas -> Pen -> Style = psDash;
+
+	int x, y;
+	x = component_array[i].get_x();
+	y = component_array[i].get_y();
+	pb -> Canvas -> MoveTo(x - wire_length - 1, y - 1);
+	pb -> Canvas -> LineTo(x + comp_width + wire_length + 1, y - 1);
+	pb -> Canvas -> LineTo(x + comp_width + wire_length + 1, y + comp_height + 1);
+	pb -> Canvas -> LineTo(x - wire_length - 1, y + comp_height + 1);
+	pb -> Canvas -> LineTo(x - wire_length - 1, y - 1);
+
+	pb -> Canvas -> Pen -> Color = clBlack;
+	pb -> Canvas -> Pen -> Style = psSolid;
+}
+
+void draw_component(TPaintBox *pb, int X, int Y, std::string comp_type){
+
+	pb -> Canvas -> Rectangle(X, Y, X + comp_width, Y + comp_height);
+	pb -> Font -> Size = 8;
+
+	if (comp_type == "not") {
+		pb -> Canvas -> MoveTo(X, Y + (int)comp_height / 2);
+		pb -> Canvas -> LineTo(X - wire_length, Y + (int)comp_height / 2);
+	}
+	else{
+		//memoDbg -> Lines -> Add(component_array[i].get_type().c_str());
+		pb -> Canvas -> MoveTo(X, Y + (int)comp_height / 3);
+		pb -> Canvas -> LineTo(X - wire_length, Y + (int)comp_height / 3);
+		pb -> Canvas -> MoveTo(X, Y + (int)2 * comp_height / 3);
+		pb -> Canvas -> LineTo(X - wire_length, Y + (int)2 * comp_height / 3);
+	}
+	pb -> Canvas -> MoveTo(X + comp_width, Y + (int)comp_height / 2);
+	pb -> Canvas -> LineTo(X + comp_width + wire_length, Y + (int)comp_height / 2);
+
+	if (comp_type == "and" || comp_type == "nand") {
+		pb -> Canvas -> TextOut(X + 6, Y + 5, "&");
+	}
+	else if (comp_type == "or" || comp_type == "nor") {
+		pb -> Canvas -> TextOut(X + 7, Y + 5, "1");
+		}
+		else if (comp_type == "xor" || comp_type == "nxor") {
+			pb -> Canvas -> TextOut(X + 2, Y + 5, "=1");
+			}
+	if (comp_type[0] == 'n') {
+		pb -> Canvas -> Ellipse(X + comp_width - 3, (int)Y + comp_height / 2 - 3, X + comp_width + 3, (int)Y + comp_height / 2 + 3);
+	}
+}
+
 void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, TShiftState Shift,
 		  int X, int Y)
 {
@@ -101,9 +157,32 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 		round_coords(&X, &Y);
 		if (valid_place(X, Y)) {
 			add_component(X, Y);
+			//draw_component(pbMain, X, Y, fetch_component_name(current_component));
+			selected_comp = component_array_pos - 1;
+			pbMain -> Invalidate();
+			//draw_highlight(pbMain, selected_comp);
 		}
 	}
-	pbMain -> Invalidate();
+	else if (cursor) {
+		if (selected_comp != -1){
+			pbMain -> Invalidate();
+			selected_comp = -1;
+		}
+		for (int i = 0; i < component_array_pos; i++) {
+			int X0, Y0;
+			X0 = component_array[i].get_x();
+			Y0 = component_array[i].get_y();
+			if (X >= X0 && X <= X0 + comp_width && Y >= Y0 && Y <= Y0 + comp_height) {
+				selected_comp = i;
+				break;
+			}
+		}
+		if (selected_comp != -1) {
+			draw_highlight(pbMain, selected_comp);
+		}
+		else
+			pbMain -> Invalidate();
+	}
 }
 //---------------------------------------------------------------------------
 void __fastcall TfrmMain::btnDbgClick(TObject *Sender)
@@ -119,40 +198,15 @@ void __fastcall TfrmMain::btnDbgClick(TObject *Sender)
 void __fastcall TfrmMain::pbMainPaint(TObject *Sender)
 {
 	draw_grid(pbMain);
-	pbMain -> Font -> Size = 8;
 	for (int i = 0; i < component_array_pos; i++) {
 		int X, Y;
 		X = component_array[i].get_x();
 		Y = component_array[i].get_y();
-		pbMain -> Canvas -> Rectangle(X, Y, X + comp_width, Y + comp_height);
 		std::string comp_type = component_array[i].get_type();
-
-		if (comp_type == "not") {
-			pbMain -> Canvas -> MoveTo(X, Y + (int)comp_height / 2);
-			pbMain -> Canvas -> LineTo(X - wire_length, Y + (int)comp_height / 2);
-		}
-		else{
-			memoDbg -> Lines -> Add(component_array[i].get_type().c_str());
-			pbMain -> Canvas -> MoveTo(X, Y + (int)comp_height / 3);
-			pbMain -> Canvas -> LineTo(X - wire_length, Y + (int)comp_height / 3);
-			pbMain -> Canvas -> MoveTo(X, Y + (int)2 * comp_height / 3);
-			pbMain -> Canvas -> LineTo(X - wire_length, Y + (int)2 * comp_height / 3);
-		}
-		pbMain -> Canvas -> MoveTo(X + comp_width, Y + (int)comp_height / 2);
-		pbMain -> Canvas -> LineTo(X + comp_width + wire_length, Y + (int)comp_height / 2);
-
-		if (comp_type == "and" || comp_type == "nand") {
-			pbMain -> Canvas -> TextOut(X + 6, Y + 5, "&");
-		}
-		else if (comp_type == "or" || comp_type == "nor") {
-				pbMain -> Canvas -> TextOut(X + 7, Y + 5, "1");
-			 }
-			 else if (comp_type == "xor" || comp_type == "nxor") {
-					pbMain -> Canvas -> TextOut(X + 2, Y + 5, "=1");
-				  }
-		if (comp_type[0] == 'n') {
-			pbMain -> Canvas -> Ellipse(X + comp_width - 3, (int)Y + comp_height / 2 - 3, X + comp_width + 3, (int)Y + comp_height / 2 + 3);
-		}
+		draw_component(pbMain, X, Y, comp_type);
+	}
+	if (selected_comp != -1) {
+		draw_highlight(pbMain, selected_comp);
 	}
 }
 //---------------------------------------------------------------------------
@@ -166,6 +220,73 @@ void __fastcall TfrmMain::FormCreate(TObject *Sender)
 void __fastcall TfrmMain::lboxComponentsDblClick(TObject *Sender)
 {
 	current_component = AnsiString(lboxComponents -> Items -> Strings[lboxComponents -> ItemIndex]).c_str();
+	cursor = false;
+	selected_comp = -1;
+	pbMain -> Invalidate();
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TfrmMain::actTakeCursorExecute(TObject *Sender)
+{
+	cursor = true;
+	current_component = "";
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::actMoveUpExecute(TObject *Sender)
+{
+	if (selected_comp != -1) {
+		int x, y;
+		x = component_array[selected_comp].get_x();
+		y = component_array[selected_comp].get_y();
+		if (valid_place(x, y - grid_width, selected_comp)) {
+			component_array[selected_comp].set_coords(x, y - grid_width);
+			pbMain -> Invalidate();
+		}
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::actMoveDownExecute(TObject *Sender)
+{
+	if (selected_comp != -1) {
+		int x, y;
+		x = component_array[selected_comp].get_x();
+		y = component_array[selected_comp].get_y();
+		if (valid_place(x, y + grid_width, selected_comp)) {
+			component_array[selected_comp].set_coords(x, y + grid_width);
+			pbMain -> Invalidate();
+		}
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::actMoveLeftExecute(TObject *Sender)
+{
+	if (selected_comp != -1) {
+		int x, y;
+		x = component_array[selected_comp].get_x();
+		y = component_array[selected_comp].get_y();
+		if (valid_place(x - grid_width, y, selected_comp)) {
+			component_array[selected_comp].set_coords(x - grid_width, y);
+		}
+		pbMain -> Invalidate();
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::actMoveRightExecute(TObject *Sender)
+{
+	if (selected_comp != -1) {
+		int x, y;
+		x = component_array[selected_comp].get_x();
+		y = component_array[selected_comp].get_y();
+		if (valid_place(x + grid_width, y, selected_comp)) {
+			component_array[selected_comp].set_coords(x + grid_width, y);
+		}
+		pbMain -> Invalidate();
+	}
 }
 //---------------------------------------------------------------------------
 
