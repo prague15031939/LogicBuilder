@@ -17,9 +17,9 @@ object frmMain: TfrmMain
   PixelsPerInch = 96
   TextHeight = 13
   object pbMain: TPaintBox
-    Left = 115
+    Left = 41
     Top = 0
-    Width = 603
+    Width = 677
     Height = 381
     ParentCustomHint = False
     Align = alClient
@@ -35,18 +35,18 @@ object frmMain: TfrmMain
     ShowHint = False
     OnMouseDown = pbMainMouseDown
     OnPaint = pbMainPaint
-    ExplicitLeft = 114
+    ExplicitLeft = 45
   end
   object tbMain: TToolBar
     Left = 0
     Top = 0
-    Width = 27
+    Width = 41
     Height = 381
     Align = alLeft
     ButtonWidth = 25
     EdgeBorders = [ebRight]
     Flat = False
-    TabOrder = 4
+    TabOrder = 3
     Transparent = True
     object ToolButton1: TToolButton
       Left = 0
@@ -54,31 +54,16 @@ object frmMain: TfrmMain
       Action = actTakeCursor
       Wrap = True
     end
-    object ToolButton2: TToolButton
-      Left = 0
-      Top = 22
-      Caption = 'ToolButton2'
-      ImageIndex = 1
-      Wrap = True
-    end
     object ToolButton4: TToolButton
       Left = 0
-      Top = 44
+      Top = 22
       Caption = 'ToolButton4'
       ImageIndex = 2
     end
   end
-  object Panel1: TPanel
-    Left = 27
-    Top = 0
-    Width = 88
-    Height = 381
-    Align = alLeft
-    TabOrder = 3
-  end
   object btnDbg: TButton
-    Left = 33
-    Top = 25
+    Left = 73
+    Top = 72
     Width = 75
     Height = 25
     Caption = 'btnDbg'
@@ -86,18 +71,19 @@ object frmMain: TfrmMain
     OnClick = btnDbgClick
   end
   object memoDbg: TMemo
-    Left = 33
-    Top = 181
+    Left = 73
+    Top = 133
     Width = 75
     Height = 138
     TabOrder = 1
   end
   object lboxComponents: TListBox
-    Left = 47
-    Top = 56
-    Width = 41
-    Height = 113
+    Left = 0
+    Top = 72
+    Width = 39
+    Height = 289
     Style = lbOwnerDrawFixed
+    BorderStyle = bsNone
     ItemHeight = 15
     Items.Strings = (
       'and2'
@@ -106,13 +92,25 @@ object frmMain: TfrmMain
       'nand2'
       'nor2'
       'nxor2'
+      'and3'
+      'or3'
+      'xor3'
+      'nand3'
+      'nor3'
+      'nxor3'
+      'and4'
+      'or4'
+      'xor4'
+      'nand4'
+      'nor4'
+      'nxor4'
       'not')
     TabOrder = 2
     OnDblClick = lboxComponentsDblClick
   end
   object menuMain: TMainMenu
-    Left = 48
-    Top = 336
+    Left = 272
+    Top = 208
     object File1: TMenuItem
       Caption = 'File'
       object Open1: TMenuItem
@@ -136,11 +134,12 @@ object frmMain: TfrmMain
     end
   end
   object actlistMain: TActionList
-    Left = 80
-    Top = 336
+    Left = 328
+    Top = 216
     object actTakeCursor: TAction
       Category = 'Control'
       Caption = 'actTakeCursor'
+      ShortCut = 67
       OnExecute = actTakeCursorExecute
     end
     object actMoveUp: TAction
@@ -166,6 +165,18 @@ object frmMain: TfrmMain
       Caption = 'actMoveRight'
       ShortCut = 68
       OnExecute = actMoveRightExecute
+    end
+    object actDeleteComponent: TAction
+      Category = 'Control'
+      Caption = 'actDeleteComponent'
+      ShortCut = 46
+      OnExecute = actDeleteComponentExecute
+    end
+    object actCheangeMoveStep: TAction
+      Category = 'Control'
+      Caption = 'actCheangeMoveStep'
+      ShortCut = 8208
+      OnExecute = actCheangeMoveStepExecute
     end
   end
 end

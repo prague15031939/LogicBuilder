@@ -25,7 +25,6 @@ __published:	// IDE-managed Components
 	TButton *btnDbg;
 	TMemo *memoDbg;
 	TListBox *lboxComponents;
-	TPanel *Panel1;
 	TMainMenu *menuMain;
 	TMenuItem *File1;
 	TMenuItem *Settings1;
@@ -36,7 +35,6 @@ __published:	// IDE-managed Components
 	TMenuItem *Help1;
 	TToolBar *tbMain;
 	TToolButton *ToolButton1;
-	TToolButton *ToolButton2;
 	TToolButton *ToolButton4;
 	TActionList *actlistMain;
 	TAction *actTakeCursor;
@@ -44,6 +42,8 @@ __published:	// IDE-managed Components
 	TAction *actMoveDown;
 	TAction *actMoveLeft;
 	TAction *actMoveRight;
+	TAction *actDeleteComponent;
+	TAction *actCheangeMoveStep;
 	void __fastcall btnDbgClick(TObject *Sender);
 	void __fastcall pbMainPaint(TObject *Sender);
 	void __fastcall FormCreate(TObject *Sender);
@@ -55,6 +55,8 @@ __published:	// IDE-managed Components
 	void __fastcall actMoveDownExecute(TObject *Sender);
 	void __fastcall actMoveLeftExecute(TObject *Sender);
 	void __fastcall actMoveRightExecute(TObject *Sender);
+	void __fastcall actDeleteComponentExecute(TObject *Sender);
+	void __fastcall actCheangeMoveStepExecute(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TfrmMain(TComponent* Owner);
