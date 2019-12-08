@@ -15,6 +15,7 @@ std::string current_component = "";
 bool cursor = true;
 int selected_comp = -1;
 int move_step;
+std::string file_dir = "";
 //---------------------------------------------------------------------------
 __fastcall TfrmMain::TfrmMain(TComponent* Owner)
 	: TForm(Owner)
@@ -98,6 +99,8 @@ void add_component(int X, int Y){
 	}
 	entity.set_coords(X, Y);
 	component_array[component_array_pos++] = entity;
+
+	frmMain -> Saveas1 -> Enabled = true;
 }
 
 void delete_component(int target){
@@ -105,6 +108,8 @@ void delete_component(int target){
 		component_array[i] = component_array[i + 1];
 	}
 	component_array_pos--;
+
+    frmMain -> Saveas1 -> Enabled = true;
 }
 
 void draw_highlight(TPaintBox *pb, int i){
@@ -154,6 +159,26 @@ void draw_component(TPaintBox *pb, int X, int Y, std::string comp_type, int entr
 	if (comp_type[0] == 'n') {
 		pb -> Canvas -> Ellipse(X + comp_width - 3, (int)Y + comp_height / 2 - 3, X + comp_width + 3, (int)Y + comp_height / 2 + 3);
 	}
+}
+
+void save_to_file(std::string dest){
+	ofstream file_obj;
+	file_obj.open(dest.c_str(), ios::out | ios::trunc | ios::binary);
+	for (int i = 0; i < component_array_pos; i++) {
+		file_obj.write((char*)&component_array[i], sizeof(component_array[i]));
+	}
+	file_obj.close();
+}
+
+void open_file(std::string src){
+   ifstream file_obj;
+   file_obj.open(src.c_str(), ios::in | ios::binary);
+   component_array_pos = 0;
+   while (!file_obj.eof()){
+		file_obj.read((char*)&component_array[component_array_pos], sizeof(component_array[component_array_pos]));
+		component_array_pos++;
+   }
+   component_array_pos--;
 }
 
 void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, TShiftState Shift,
@@ -222,6 +247,8 @@ void __fastcall TfrmMain::pbMainPaint(TObject *Sender)
 
 void __fastcall TfrmMain::FormCreate(TObject *Sender)
 {
+	Save1 -> Enabled = false;
+	Saveas1 -> Enabled = false;
 	pbMain -> Invalidate();
 	move_step = 2 * grid_width;
 }
@@ -300,7 +327,7 @@ void __fastcall TfrmMain::actMoveRightExecute(TObject *Sender)
 		y = component_array[selected_comp].get_y();
 		if (valid_place(x + move_step, y, selected_comp)) {
 			component_array[selected_comp].set_coords(x + move_step, y);
-            pbMain -> Invalidate();
+			pbMain -> Invalidate();
 		}
 	}
 }
@@ -317,13 +344,52 @@ void __fastcall TfrmMain::actDeleteComponentExecute(TObject *Sender)
 	}
 }
 
-
 void __fastcall TfrmMain::actCheangeMoveStepExecute(TObject *Sender)
 {
 	int coef = ((int)move_step / grid_width + 1) % 5;
 	if (coef == 0)
 		coef = 1;
 	move_step = grid_width * coef;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::actSaveFileExecute(TObject *Sender)
+{
+	if (file_dir != "") {
+		save_to_file(file_dir);
+        Save1 -> Enabled = false;
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::actOpenFileExecute(TObject *Sender)
+{
+	if (OpenDialog -> Execute()) {
+		file_dir = AnsiString(OpenDialog -> FileName).c_str();
+		open_file(file_dir);
+		frmMain -> Caption = ("LogicBuilder - " + file_dir).c_str();
+		Save1 -> Enabled = true;
+		selected_comp = -1;
+		current_component = "";
+		cursor = true;
+		pbMain -> Invalidate();
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::actSaveFileAsExecute(TObject *Sender)
+{
+	if (SaveDialog -> Execute()) {
+		file_dir = AnsiString(SaveDialog -> FileName).c_str();
+		save_to_file(file_dir);
+        Save1 -> Enabled = true;
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::actExitExecute(TObject *Sender)
+{
+    frmMain -> Close();
 }
 //---------------------------------------------------------------------------
 

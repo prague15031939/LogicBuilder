@@ -13,8 +13,12 @@
 #include <Vcl.ToolWin.hpp>
 #include <System.Actions.hpp>
 #include <Vcl.ActnList.hpp>
+#include <Vcl.Dialogs.hpp>
+#include <System.ImageList.hpp>
+#include <Vcl.ImgList.hpp>
 #include <string>
 #include <cstdlib>
+#include <fstream.h>
 //---------------------------------------------------------------------------
 using namespace std;
 
@@ -44,6 +48,13 @@ __published:	// IDE-managed Components
 	TAction *actMoveRight;
 	TAction *actDeleteComponent;
 	TAction *actCheangeMoveStep;
+	TSaveDialog *SaveDialog;
+	TOpenDialog *OpenDialog;
+	TAction *actOpenFile;
+	TAction *actSaveFile;
+	TAction *actSaveFileAs;
+	TImageList *ImageList;
+	TAction *actExit;
 	void __fastcall btnDbgClick(TObject *Sender);
 	void __fastcall pbMainPaint(TObject *Sender);
 	void __fastcall FormCreate(TObject *Sender);
@@ -57,6 +68,10 @@ __published:	// IDE-managed Components
 	void __fastcall actMoveRightExecute(TObject *Sender);
 	void __fastcall actDeleteComponentExecute(TObject *Sender);
 	void __fastcall actCheangeMoveStepExecute(TObject *Sender);
+	void __fastcall actSaveFileExecute(TObject *Sender);
+	void __fastcall actOpenFileExecute(TObject *Sender);
+	void __fastcall actSaveFileAsExecute(TObject *Sender);
+	void __fastcall actExitExecute(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TfrmMain(TComponent* Owner);
