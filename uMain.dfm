@@ -34,6 +34,7 @@ object frmMain: TfrmMain
     ParentShowHint = False
     ShowHint = False
     OnMouseDown = pbMainMouseDown
+    OnMouseMove = pbMainMouseMove
     OnPaint = pbMainPaint
     ExplicitLeft = 45
   end
@@ -48,18 +49,6 @@ object frmMain: TfrmMain
     Flat = False
     TabOrder = 3
     Transparent = True
-    object ToolButton1: TToolButton
-      Left = 0
-      Top = 0
-      Action = actTakeCursor
-      Wrap = True
-    end
-    object ToolButton4: TToolButton
-      Left = 0
-      Top = 22
-      Caption = 'ToolButton4'
-      ImageIndex = 2
-    end
   end
   object btnDbg: TButton
     Left = 73
@@ -79,7 +68,7 @@ object frmMain: TfrmMain
   end
   object lboxComponents: TListBox
     Left = 0
-    Top = 72
+    Top = 0
     Width = 39
     Height = 289
     Style = lbOwnerDrawFixed
@@ -209,6 +198,18 @@ object frmMain: TfrmMain
       Caption = 'actExit'
       ShortCut = 32883
       OnExecute = actExitExecute
+    end
+    object actSetWireMode: TAction
+      Category = 'Control'
+      Caption = 'actSetWireMode'
+      ShortCut = 88
+      OnExecute = actSetWireModeExecute
+    end
+    object actEndWire: TAction
+      Category = 'Control'
+      Caption = 'actEndWire'
+      ShortCut = 32786
+      OnExecute = actEndWireExecute
     end
   end
   object SaveDialog: TSaveDialog

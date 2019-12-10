@@ -38,8 +38,6 @@ __published:	// IDE-managed Components
 	TMenuItem *Exit1;
 	TMenuItem *Help1;
 	TToolBar *tbMain;
-	TToolButton *ToolButton1;
-	TToolButton *ToolButton4;
 	TActionList *actlistMain;
 	TAction *actTakeCursor;
 	TAction *actMoveUp;
@@ -55,6 +53,8 @@ __published:	// IDE-managed Components
 	TAction *actSaveFileAs;
 	TImageList *ImageList;
 	TAction *actExit;
+	TAction *actSetWireMode;
+	TAction *actEndWire;
 	void __fastcall btnDbgClick(TObject *Sender);
 	void __fastcall pbMainPaint(TObject *Sender);
 	void __fastcall FormCreate(TObject *Sender);
@@ -72,6 +72,10 @@ __published:	// IDE-managed Components
 	void __fastcall actOpenFileExecute(TObject *Sender);
 	void __fastcall actSaveFileAsExecute(TObject *Sender);
 	void __fastcall actExitExecute(TObject *Sender);
+	void __fastcall actSetWireModeExecute(TObject *Sender);
+	void __fastcall actEndWireExecute(TObject *Sender);
+	void __fastcall pbMainMouseMove(TObject *Sender, TShiftState Shift, int X, int Y);
+
 private:	// User declarations
 public:		// User declarations
 	__fastcall TfrmMain(TComponent* Owner);
@@ -79,6 +83,8 @@ public:		// User declarations
 //---------------------------------------------------------------------------
 extern PACKAGE TfrmMain *frmMain;
 //---------------------------------------------------------------------------
+typedef enum {wsBegin, wsMiddle, wsEnd} TWireStage;
+
 class Component {
 public:
 	void set_type(std::string name){
@@ -91,6 +97,21 @@ public:
 		this->x_coord = x;
 		this->y_coord = y;
 	}
+	void set_out_x(int x){
+		this->out_x = x;
+	}
+	void set_out_y(int y){
+		this->out_y = y;
+	}
+	void set_in_x(int x){
+		this->in_x = x;
+	}
+	void set_in_y(int arr[4]){
+		for (int i = 0; i < 4; i++) {
+			this->in_y[i] = arr[i];
+		}
+	}
+
 	std::string get_type(){
 		return this->type;
 	}
@@ -103,9 +124,53 @@ public:
 	int get_y(){
 		return this->y_coord;
 	}
+	int get_out_x(){
+		return this->out_x;
+	}
+	int get_out_y(){
+		return this->out_y;
+	}
+	int get_in_x(){
+		return this->in_x;
+	}
+	void get_in_y(int arr[4]){
+		for (int i = 0; i < 4; i++) {
+			arr[i] = this->in_y[i];
+		}
+	}
 private:
 	std::string type;
 	int entry_amount;
 	int x_coord, y_coord;
+	int out_x, out_y;
+	int in_x;
+	int in_y[4];
+};
+
+class Wire {
+public:
+	void set_lines(arr[10][4]){
+		for (int i = 0; i < 10; i++) {
+			for (int j = 0; j < 4; j++) {
+				this->lines[i][j] = arr[i][j];
+			}
+		}
+	}
+	void get_lines(arr[10][4]){
+		for (int i = 0; i < 10; i++) {
+			for (int j = 0; j < 4; j++) {
+				arr[i][j] = this->lines[i][j];
+			}
+		}
+	}
+	void set_lines_amount(int value){
+		this->lines_amount = value;
+	}
+	int get_lines_amount(){
+        return this->lines_amount;
+	}
+private:
+	int lines[10][4];
+	int lines_amount;
 };
 #endif
