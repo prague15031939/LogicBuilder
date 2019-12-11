@@ -18,6 +18,7 @@
 #include <Vcl.ImgList.hpp>
 #include <string>
 #include <cstdlib>
+#include <cmath>
 #include <fstream.h>
 //---------------------------------------------------------------------------
 using namespace std;
@@ -26,8 +27,6 @@ class TfrmMain : public TForm
 {
 __published:	// IDE-managed Components
 	TPaintBox *pbMain;
-	TButton *btnDbg;
-	TMemo *memoDbg;
 	TListBox *lboxComponents;
 	TMainMenu *menuMain;
 	TMenuItem *File1;
@@ -55,7 +54,6 @@ __published:	// IDE-managed Components
 	TAction *actExit;
 	TAction *actSetWireMode;
 	TAction *actEndWire;
-	void __fastcall btnDbgClick(TObject *Sender);
 	void __fastcall pbMainPaint(TObject *Sender);
 	void __fastcall FormCreate(TObject *Sender);
 	void __fastcall lboxComponentsDblClick(TObject *Sender);
@@ -83,7 +81,7 @@ public:		// User declarations
 //---------------------------------------------------------------------------
 extern PACKAGE TfrmMain *frmMain;
 //---------------------------------------------------------------------------
-typedef enum {wsBegin, wsMiddle, wsEnd} TWireStage;
+typedef enum {wsBegin, wsMiddle, wsEnd, wsUnknown} TWireStage;
 
 class Component {
 public:

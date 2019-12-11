@@ -47,24 +47,8 @@ object frmMain: TfrmMain
     ButtonWidth = 25
     EdgeBorders = [ebRight]
     Flat = False
-    TabOrder = 3
-    Transparent = True
-  end
-  object btnDbg: TButton
-    Left = 73
-    Top = 72
-    Width = 75
-    Height = 25
-    Caption = 'btnDbg'
-    TabOrder = 0
-    OnClick = btnDbgClick
-  end
-  object memoDbg: TMemo
-    Left = 73
-    Top = 133
-    Width = 75
-    Height = 138
     TabOrder = 1
+    Transparent = True
   end
   object lboxComponents: TListBox
     Left = 0
@@ -94,7 +78,7 @@ object frmMain: TfrmMain
       'nor4'
       'nxor4'
       'not')
-    TabOrder = 2
+    TabOrder = 0
     OnDblClick = lboxComponentsDblClick
   end
   object menuMain: TMainMenu

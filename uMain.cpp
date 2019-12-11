@@ -27,6 +27,8 @@ int entry_coords[4][4] = {{25, 0, 0, 0}, {15, 35, 0, 0}, {10, 25, 40, 0}, {10, 2
 int move_step;
 bool cursor_mode = true;
 bool wire_mode = false;
+int move_line_buffer[10][4];
+int move_line_buffer_pos = 0;
 int selected_comp = -1;
 
 std::string file_dir = "";
@@ -133,6 +135,18 @@ void round_coords(int* X, int* Y){
 	}
 	else
 		return;
+}
+
+void correct_with_angle(int *x, int *y){
+	int x0, y0;
+	x0 = current_wire[current_wire_pos][0];
+	y0 = current_wire[current_wire_pos][1];
+	if (*x - x0 != 0) {
+		if (atan((float)abs(*y - y0)/abs(*x - x0)) * 180.0 / 3.1415926 >= 45)
+			*x = x0;
+		else
+			*y = y0;
+	}
 }
 
 std::string fetch_component_name(std::string src){
@@ -300,29 +314,45 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 					current_wire[current_wire_pos][0] = X;
 					current_wire[current_wire_pos][1] = Y;
 					wire_stage = wsMiddle;
+
+					move_line_buffer[move_line_buffer_pos][0] = X;
+					move_line_buffer[move_line_buffer_pos][1] = Y;
 				}
 				break;
 
 			case wsMiddle:
+				correct_with_angle(&X, &Y);
 				if (valid_wire_middle(&X, &Y)) {
 					current_wire[current_wire_pos][2] = X;
 					current_wire[current_wire_pos][3] = Y;
 					current_wire_pos++;
 					current_wire[current_wire_pos][0] = X;
 					current_wire[current_wire_pos][1] = Y;
+
+					move_line_buffer[move_line_buffer_pos][2] = X;
+					move_line_buffer[move_line_buffer_pos][3] = Y;
+					move_line_buffer_pos++;
+					move_line_buffer[move_line_buffer_pos][0] = X;
+					move_line_buffer[move_line_buffer_pos][1] = Y;
 				}
 				break;
 
 			case wsEnd:
 				if (valid_wire_end(&X, &Y)) {
+					current_wire[current_wire_pos - 1][3] = Y;
+					current_wire[current_wire_pos][1] = Y;
 					current_wire[current_wire_pos][2] = X;
 					current_wire[current_wire_pos][3] = Y;
 					current_wire_pos++;
 
+                    move_line_buffer[move_line_buffer_pos][2] = X;
+					move_line_buffer[move_line_buffer_pos][3] = Y;
+
 					add_wire(current_wire);
-                    current_wire_pos = 0;
+					current_wire_pos = 0;
 					wire_stage = wsBegin;
 					pbMain -> Invalidate();
+                    move_line_buffer_pos = 0;
 				}
 				break;
 		}
@@ -349,17 +379,6 @@ void open_file(std::string src){
    component_array_pos--;
 }
 //---------------------------------------------------------------------------
-void __fastcall TfrmMain::btnDbgClick(TObject *Sender)
-{
-	memoDbg->Lines->Clear();
-	for (int i = 0; i < component_array_pos; i++) {
-		memoDbg->Lines->Add(component_array[i].get_type().c_str());
-		memoDbg->Lines->Add(component_array[i].get_entry_amount());
-		memoDbg->Lines->Add(component_array[i].get_x());
-		memoDbg->Lines->Add(component_array[i].get_y());
-	}
-}
-//---------------------------------------------------------------------------
 
 void __fastcall TfrmMain::pbMainPaint(TObject *Sender)
 {
@@ -376,6 +395,12 @@ void __fastcall TfrmMain::pbMainPaint(TObject *Sender)
 	for (int i = 0; i < wire_array_pos; i++) {
 		draw_wire(pbMain, wire_array[i]);
 	}
+	if (wire_stage != wsUnknown && wire_stage != wsBegin) {
+		for (int i = 0; i <= move_line_buffer_pos; i++) {
+			pbMain -> Canvas -> MoveTo(move_line_buffer[i][0], move_line_buffer[i][1]);
+			pbMain -> Canvas -> LineTo(move_line_buffer[i][2], move_line_buffer[i][3]);
+		}
+	}
 }
 //---------------------------------------------------------------------------
 
@@ -383,8 +408,9 @@ void __fastcall TfrmMain::FormCreate(TObject *Sender)
 {
 	Save1 -> Enabled = false;
 	Saveas1 -> Enabled = false;
-	pbMain -> Invalidate();
 	move_step = 2 * grid_width;
+    frmMain -> DoubleBuffered = true;
+	pbMain -> Invalidate();
 }
 //---------------------------------------------------------------------------
 
@@ -544,7 +570,7 @@ void __fastcall TfrmMain::actExitExecute(TObject *Sender)
 void __fastcall TfrmMain::actSetWireModeExecute(TObject *Sender)
 {
 	wire_mode = true;
-    wire_stage = wsBegin;
+	wire_stage = wsBegin;
 	cursor_mode = false;
 	current_component = "";
 }
@@ -557,15 +583,16 @@ void __fastcall TfrmMain::actEndWireExecute(TObject *Sender)
 //---------------------------------------------------------------------------
 
 void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, int X,
-          int Y)
+		  int Y)
 {
 	if (x_dot_highlight != -1 && y_dot_highlight != -1) {
 		if (abs(x_dot_highlight - X) > grid_width || abs(y_dot_highlight - Y) > grid_width){
-            x_dot_highlight = -1;
+			x_dot_highlight = -1;
 			y_dot_highlight = -1;
-            pbMain -> Invalidate();
+			pbMain -> Invalidate();
 		}
 	}
+
 	if (wire_mode && wire_stage == wsBegin) {
 		for (int i = 0; i < component_array_pos; i++) {
 			int out_x, out_y;
@@ -579,6 +606,7 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 			}
 		}
 	}
+
 	if (wire_mode && wire_stage == wsEnd) {
 		for (int i = 0; i < component_array_pos; i++) {
 			bool exit = false;
@@ -590,12 +618,21 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 					x_dot_highlight = in_x;
 					y_dot_highlight = in_y[j];
 					draw_dot_highlight(pbMain, x_dot_highlight, y_dot_highlight);
-                    exit = true;
+					exit = true;
 					break;
 				}
 				if (exit)
 					break;
 			}
+		}
+	}
+
+	if (wire_mode) {
+		if (wire_stage != wsUnknown) {
+			correct_with_angle(&X, &Y);
+			move_line_buffer[move_line_buffer_pos][2] = X;
+			move_line_buffer[move_line_buffer_pos][3] = Y;
+			pbMain -> Invalidate();
 		}
 	}
 }
