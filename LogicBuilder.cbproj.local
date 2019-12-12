@@ -1,14 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
+    <Transaction>1899.12.30 00:00:00.000.888,D:\Works builder\курсач\LogicBuilder.cbproj=D:\Works builder\LogicBuilder.cbproj</Transaction>
     <Transaction>1899.12.30 00:00:00.000.267,=D:\Works builder\Unit1.cpp</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.005,D:\Works builder\Unit1.cpp=D:\Works builder\курсач\uMain.cpp</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.816,D:\Works builder\Project1.cbproj=D:\Works builder\LogicBuilder.cbproj</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.005,D:\Works builder\Unit1.dfm=D:\Works builder\курсач\uMain.dfm</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.812,D:\Works builder\Project1PCH1.h=D:\Works builder\LogicBuilderPCH1.h</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.005,D:\Works builder\Unit1.h=D:\Works builder\курсач\uMain.h</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.371,D:\Works builder\LogicBuilderPCH1.h=D:\Works builder\курсач\LogicBuilderPCH1.h</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.888,D:\Works builder\LogicBuilder.cbproj=D:\Works builder\курсач\LogicBuilder.cbproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.005,D:\Works builder\курсач\uMain.h=D:\Works builder\Unit1.h</Transaction>
     <Transaction>1899.12.30 00:00:00.000.940,=D:\Works builder\Project1PCH1.h</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.371,D:\Works builder\курсач\LogicBuilderPCH1.h=D:\Works builder\LogicBuilderPCH1.h</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.005,D:\Works builder\курсач\uMain.cpp=D:\Works builder\Unit1.cpp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.812,D:\Works builder\LogicBuilderPCH1.h=D:\Works builder\Project1PCH1.h</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.816,D:\Works builder\LogicBuilder.cbproj=D:\Works builder\Project1.cbproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.005,D:\Works builder\курсач\uMain.dfm=D:\Works builder\Unit1.dfm</Transaction>
   </Transactions>
 </BorlandProject>

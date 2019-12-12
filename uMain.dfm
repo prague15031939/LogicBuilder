@@ -3,7 +3,7 @@ object frmMain: TfrmMain
   Top = 0
   BorderWidth = 1
   Caption = 'LogicBuilder'
-  ClientHeight = 381
+  ClientHeight = 391
   ClientWidth = 718
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
@@ -20,7 +20,7 @@ object frmMain: TfrmMain
     Left = 41
     Top = 0
     Width = 677
-    Height = 381
+    Height = 391
     ParentCustomHint = False
     Align = alClient
     Color = clWhite
@@ -37,27 +37,17 @@ object frmMain: TfrmMain
     OnMouseMove = pbMainMouseMove
     OnPaint = pbMainPaint
     ExplicitLeft = 45
-  end
-  object tbMain: TToolBar
-    Left = 0
-    Top = 0
-    Width = 41
-    Height = 381
-    Align = alLeft
-    ButtonWidth = 25
-    EdgeBorders = [ebRight]
-    Flat = False
-    TabOrder = 1
-    Transparent = True
+    ExplicitWidth = 718
+    ExplicitHeight = 599
   end
   object lboxComponents: TListBox
     Left = 0
     Top = 0
-    Width = 39
-    Height = 289
+    Width = 41
+    Height = 391
     Style = lbOwnerDrawFixed
+    Align = alLeft
     BorderStyle = bsNone
-    ItemHeight = 15
     Items.Strings = (
       'and2'
       'or2'
@@ -80,6 +70,7 @@ object frmMain: TfrmMain
       'not')
     TabOrder = 0
     OnDblClick = lboxComponentsDblClick
+    ExplicitLeft = -6
   end
   object menuMain: TMainMenu
     Images = ImageList

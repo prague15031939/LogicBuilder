@@ -30,6 +30,7 @@ bool wire_mode = false;
 int move_line_buffer[10][4];
 int move_line_buffer_pos = 0;
 int selected_comp = -1;
+int selected_wire = -1;
 
 std::string file_dir = "";
 //---------------------------------------------------------------------------
@@ -37,6 +38,7 @@ __fastcall TfrmMain::TfrmMain(TComponent* Owner)
 	: TForm(Owner)
 {
 }
+void draw_wire(TPaintBox *pb, Wire entity);
 
 bool valid_wire_middle(int *x0, int *y0){
 	for (int i = 0; i < component_array_pos; i++) {
@@ -52,11 +54,12 @@ bool valid_wire_middle(int *x0, int *y0){
 
 bool valid_wire_end(int *x0, int *y0){
 	for (int i = 0; i < component_array_pos; i++) {
-		int x, y[4];
+		int x, y[4], in_wires[4];
 		x = component_array[i].get_in_x();
 		component_array[i].get_in_y(y);
+		component_array[i].get_in_wires(in_wires);
 		for (int j = 0; j < component_array[i].get_entry_amount(); j++) {
-			if (abs(*x0 - x) < grid_width && abs(*y0 - y[j]) < grid_width) {
+			if (abs(*x0 - x) < grid_width && abs(*y0 - y[j]) < grid_width && in_wires[j] == -1) {
 				*x0 = x;
 				*y0 = y[j];
 				return true;
@@ -71,7 +74,8 @@ bool valid_wire_start(int *x0, int *y0){
 		int x, y;
 		x = component_array[i].get_out_x();
 		y = component_array[i].get_out_y();
-		if (abs(*x0 - x) < grid_width && abs(*y0 - y) < grid_width) {
+		int out_wire = component_array[i].get_out_wire();
+		if (abs(*x0 - x) < grid_width && abs(*y0 - y) < grid_width && out_wire == -1) {
 			*x0 = x;
 			*y0 = y;
 			return true;
@@ -149,6 +153,29 @@ void correct_with_angle(int *x, int *y){
 	}
 }
 
+int find_start_component(int x0, int y0){
+	for (int i = 0; i < component_array_pos; i++) {
+		if (x0 == component_array[i].get_out_x() && y0 == component_array[i].get_out_y()) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+void find_end_component(int end[2], int x0, int y0){
+	for (int i = 0; i < component_array_pos; i++) {
+		int in_y[4];
+		component_array[i].get_in_y(in_y);
+		for (int j = 0; j < component_array[i].get_entry_amount(); j++) {
+			if (x0 == component_array[i].get_in_x() && y0 == in_y[j]) {
+				end[0] = i;
+				end[1] = j;
+				return;
+			}
+		}
+	}
+}
+
 std::string fetch_component_name(std::string src){
 	std::string res = "";
 	int i = 0;
@@ -178,12 +205,30 @@ void add_component(int X, int Y){
 	entity.set_in_x(X - wire_length);
 	entity.set_out_x(X + comp_width + wire_length);
 	entity.set_out_y(Y + (int)comp_height / 2);
+
+	for (int i = 0; i < 4; i++) {
+		entity.set_in_wire(-1, i);
+	}
+	entity.set_out_wire(-1);
 	component_array[component_array_pos++] = entity;
 
 	frmMain -> Saveas1 -> Enabled = true;
 }
 
 void delete_component(int target){
+	int in_wires[4];
+	component_array[target].get_in_wires(in_wires);
+	for (int i = 0; i < 4; i++) {
+		if (in_wires[i] != -1) {
+			wire_array[in_wires[i]].set_in_out_component(wire_array[in_wires[i]].get_in_component(), -1);
+			wire_array[in_wires[i]].set_out_component_entry(-1);
+		}
+	}
+	int out_wire = component_array[target].get_out_wire();
+	if (out_wire != -1) {
+		wire_array[out_wire].set_in_out_component(-1, wire_array[out_wire].get_out_component());
+	}
+
 	for (int i = target; i < component_array_pos - 1; i++) {
 		component_array[i] = component_array[i + 1];
 	}
@@ -193,8 +238,33 @@ void delete_component(int target){
 }
 
 void add_wire(int item[10][4]){
+	int start;
+	int end[2] = {-1, -1};
+	start = find_start_component(item[0][0], item[0][1]);
+	find_end_component(end, item[current_wire_pos][2], item[current_wire_pos][3]);
+
+	component_array[start].set_out_wire(wire_array_pos);
+	component_array[end[0]].set_in_wire(wire_array_pos, end[1]);
+
+	wire_array[wire_array_pos].set_in_out_component(start, end[0]);
+	wire_array[wire_array_pos].set_out_component_entry(end[1]);
 	wire_array[wire_array_pos].set_lines(item);
-	wire_array[wire_array_pos++].set_lines_amount(current_wire_pos);
+	wire_array[wire_array_pos++].set_lines_amount(++current_wire_pos);
+}
+
+void delete_wire(int target){
+	int in_comp = wire_array[target].get_in_component();
+	component_array[in_comp].set_out_wire(-1);
+
+	int out_comp = wire_array[target].get_out_component();
+	component_array[out_comp].set_in_wire(-1, wire_array[target].get_out_component_entry());
+
+	for (int i = target; i < wire_array_pos - 1; i++) {
+		wire_array[i] = wire_array[i + 1];
+	}
+	wire_array_pos--;
+
+	frmMain -> Saveas1 -> Enabled = true;
 }
 
 void draw_highlight(TPaintBox *pb, int i){
@@ -215,12 +285,23 @@ void draw_highlight(TPaintBox *pb, int i){
 	pb -> Canvas -> Pen -> Style = psSolid;
 }
 
+void draw_wire_highlight(TPaintBox *pb, int i){
+
+	pb -> Canvas -> Pen -> Color = clRed;
+	pb -> Canvas -> Pen -> Width += 1;
+
+	draw_wire(pb, wire_array[i]);
+
+	pb -> Canvas -> Pen -> Color = clBlack;
+	pb -> Canvas -> Pen -> Width -= 1;
+}
+
 void draw_dot_highlight(TPaintBox *pb, int x, int y){
 	pb -> Canvas -> Brush -> Color = clRed;
 	pb -> Canvas -> Pen -> Color = clRed;
 	pb -> Canvas -> Pie(x - 3, y - 3, x + 3, y + 3, 0, 0, 0, 0);
 	pb -> Canvas -> Brush -> Color = clBlack;
-    pb -> Canvas -> Pen -> Color = clBlack;
+	pb -> Canvas -> Pen -> Color = clBlack;
 }
 
 void draw_entries(TPaintBox *pb, Component entity){
@@ -273,6 +354,13 @@ void draw_wire(TPaintBox *pb, Wire entity){
 	}
 }
 
+void draw_temp_lines(TPaintBox *pb){
+	for (int i = 0; i <= move_line_buffer_pos; i++) {
+		pb -> Canvas -> MoveTo(move_line_buffer[i][0], move_line_buffer[i][1]);
+		pb -> Canvas -> LineTo(move_line_buffer[i][2], move_line_buffer[i][3]);
+	}
+}
+
 void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, TShiftState Shift,
 		  int X, int Y)
 {
@@ -280,16 +368,18 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 		round_coords(&X, &Y);
 		if (valid_place(X, Y)) {
 			add_component(X, Y);
-			//draw_component(pbMain, X, Y, fetch_component_name(current_component));
 			selected_comp = component_array_pos - 1;
 			pbMain -> Invalidate();
-			//draw_highlight(pbMain, selected_comp);
 		}
 	}
 	else if (cursor_mode) {
 		if (selected_comp != -1){
 			pbMain -> Invalidate();
 			selected_comp = -1;
+		}
+		if (selected_wire != -1){
+			pbMain -> Invalidate();
+			selected_wire = -1;
 		}
 		for (int i = 0; i < component_array_pos; i++) {
 			int X0, Y0;
@@ -300,11 +390,20 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 				break;
 			}
 		}
-		if (selected_comp != -1) {
-			draw_highlight(pbMain, selected_comp);
+		for (int i = 0; i < wire_array_pos; i++) {
+			int lines[10][4];
+			wire_array[i].get_lines(lines);
+			for (int j = 0; j < wire_array[i].get_lines_amount(); j++) {
+				if ((abs(X - lines[j][0]) < 4 && abs(X - lines[j][2]) < 4 &&
+					(Y >= lines[j][1] && Y <= lines[j][3] || Y <= lines[j][1] && Y >= lines[j][3])) ||
+					(abs(Y - lines[j][1]) < 4 && abs(Y - lines[j][3]) < 4 &&
+					(X >= lines[j][0] && X <= lines[j][2] || X <= lines[j][0] && X >= lines[j][2]))) {
+					selected_wire = i;
+					break;
+				}
+			}
 		}
-		else
-			pbMain -> Invalidate();
+		pbMain -> Invalidate();
 	}
 	else if (wire_mode) {
 
@@ -343,16 +442,15 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 					current_wire[current_wire_pos][1] = Y;
 					current_wire[current_wire_pos][2] = X;
 					current_wire[current_wire_pos][3] = Y;
-					current_wire_pos++;
 
-                    move_line_buffer[move_line_buffer_pos][2] = X;
+					move_line_buffer[move_line_buffer_pos][2] = X;
 					move_line_buffer[move_line_buffer_pos][3] = Y;
 
 					add_wire(current_wire);
 					current_wire_pos = 0;
 					wire_stage = wsBegin;
 					pbMain -> Invalidate();
-                    move_line_buffer_pos = 0;
+					move_line_buffer_pos = 0;
 				}
 				break;
 		}
@@ -395,11 +493,11 @@ void __fastcall TfrmMain::pbMainPaint(TObject *Sender)
 	for (int i = 0; i < wire_array_pos; i++) {
 		draw_wire(pbMain, wire_array[i]);
 	}
-	if (wire_stage != wsUnknown && wire_stage != wsBegin) {
-		for (int i = 0; i <= move_line_buffer_pos; i++) {
-			pbMain -> Canvas -> MoveTo(move_line_buffer[i][0], move_line_buffer[i][1]);
-			pbMain -> Canvas -> LineTo(move_line_buffer[i][2], move_line_buffer[i][3]);
-		}
+	if (selected_wire != -1) {
+		draw_wire_highlight(pbMain, selected_wire);
+	}
+	if (wire_mode && wire_stage != wsBegin) {
+		draw_temp_lines(pbMain);
 	}
 }
 //---------------------------------------------------------------------------
@@ -419,6 +517,7 @@ void __fastcall TfrmMain::lboxComponentsDblClick(TObject *Sender)
 	current_component = AnsiString(lboxComponents -> Items -> Strings[lboxComponents -> ItemIndex]).c_str();
 	cursor_mode = false;
 	selected_comp = -1;
+    selected_wire = -1;
 	pbMain -> Invalidate();
 }
 //---------------------------------------------------------------------------
@@ -437,12 +536,25 @@ Component modify_component_position(Component entity, int new_x, int new_y){
 	entity.set_in_x(new_x - wire_length);
 	entity.set_out_x(new_x + comp_width + wire_length);
 	entity.set_out_y(new_y + (int)comp_height / 2);
+
 	int in_y[4] = {0, 0, 0, 0};
 	int num = entity.get_entry_amount();
 	for (int i = 0; i < num; i++) {
 		in_y[i] = new_y + entry_coords[num - 1][i];
 	}
 	entity.set_in_y(in_y);
+
+	int out_wire = entity.get_out_wire();
+	if (out_wire != -1) {
+		wire_array[out_wire].set_first_coords(new_x + comp_width + wire_length, new_y + (int)comp_height / 2);
+	}
+	int in_wires[4] = {-1, -1, -1, -1};
+	entity.get_in_wires(in_wires);
+	for (int i = 0; i < num; i++) {
+		if (in_wires[i] != -1) {
+			wire_array[in_wires[i]].set_last_coords(new_x - wire_length, new_y + entry_coords[num - 1][i]);
+		}
+	}
 
 	return entity;
 }
@@ -512,10 +624,14 @@ void __fastcall TfrmMain::actDeleteComponentExecute(TObject *Sender)
 	if (selected_comp != -1) {
 		delete_component(selected_comp);
 		selected_comp = -1;
-		cursor_mode = true;
-		current_component = "";
-		pbMain -> Invalidate();
 	}
+	if (selected_wire != -1) {
+		delete_wire(selected_wire);
+		selected_wire = -1;
+	}
+	cursor_mode = true;
+	current_component = "";
+	pbMain -> Invalidate();
 }
 
 void __fastcall TfrmMain::actCheangeMoveStepExecute(TObject *Sender)
@@ -544,6 +660,7 @@ void __fastcall TfrmMain::actOpenFileExecute(TObject *Sender)
 		frmMain -> Caption = ("LogicBuilder - " + file_dir).c_str();
 		Save1 -> Enabled = true;
 		selected_comp = -1;
+		selected_wire = -1;
 		current_component = "";
 		cursor_mode = true;
 		pbMain -> Invalidate();
@@ -598,7 +715,8 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 			int out_x, out_y;
 			out_x = component_array[i].get_out_x();
 			out_y = component_array[i].get_out_y();
-			if (abs(out_x - X) < grid_width && abs(out_y - Y) < grid_width) {
+			int out_wire = component_array[i].get_out_wire();
+			if (abs(out_x - X) < grid_width && abs(out_y - Y) < grid_width && out_wire == -1) {
 				x_dot_highlight = out_x;
 				y_dot_highlight = out_y;
 				draw_dot_highlight(pbMain, x_dot_highlight, y_dot_highlight);
@@ -610,11 +728,12 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 	if (wire_mode && wire_stage == wsEnd) {
 		for (int i = 0; i < component_array_pos; i++) {
 			bool exit = false;
-			int in_x, in_y[4];
+			int in_x, in_y[4], in_wires[4];
 			in_x = component_array[i].get_in_x();
 			component_array[i].get_in_y(in_y);
+			component_array[i].get_in_wires(in_wires);
 			for (int j = 0; j < component_array[i].get_entry_amount(); j++) {
-				if (abs(in_x - X) < grid_width && abs(in_y[j] - Y) < grid_width) {
+				if (abs(in_x - X) < grid_width && abs(in_y[j] - Y) < grid_width && in_wires[j] == -1) {
 					x_dot_highlight = in_x;
 					y_dot_highlight = in_y[j];
 					draw_dot_highlight(pbMain, x_dot_highlight, y_dot_highlight);
@@ -628,12 +747,10 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 	}
 
 	if (wire_mode) {
-		if (wire_stage != wsUnknown) {
-			correct_with_angle(&X, &Y);
-			move_line_buffer[move_line_buffer_pos][2] = X;
-			move_line_buffer[move_line_buffer_pos][3] = Y;
-			pbMain -> Invalidate();
-		}
+		correct_with_angle(&X, &Y);
+		move_line_buffer[move_line_buffer_pos][2] = X;
+		move_line_buffer[move_line_buffer_pos][3] = Y;
+		pbMain -> Invalidate();
 	}
 }
 //---------------------------------------------------------------------------
