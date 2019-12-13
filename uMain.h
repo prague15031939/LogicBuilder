@@ -53,6 +53,8 @@ __published:	// IDE-managed Components
 	TAction *actSetWireMode;
 	TAction *actEndWire;
 	TListBox *lboxComponents;
+	TAction *actNewFile;
+	TMenuItem *New1;
 	void __fastcall pbMainPaint(TObject *Sender);
 	void __fastcall FormCreate(TObject *Sender);
 	void __fastcall lboxComponentsDblClick(TObject *Sender);
@@ -72,6 +74,7 @@ __published:	// IDE-managed Components
 	void __fastcall actSetWireModeExecute(TObject *Sender);
 	void __fastcall actEndWireExecute(TObject *Sender);
 	void __fastcall pbMainMouseMove(TObject *Sender, TShiftState Shift, int X, int Y);
+	void __fastcall actNewFileExecute(TObject *Sender);
 
 private:	// User declarations
 public:		// User declarations

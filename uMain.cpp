@@ -438,8 +438,14 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 
 			case wsEnd:
 				if (valid_wire_end(&X, &Y)) {
-					current_wire[current_wire_pos - 1][3] = Y;
-					current_wire[current_wire_pos][1] = Y;
+					if (move_line_buffer[move_line_buffer_pos][1] == move_line_buffer[move_line_buffer_pos][3]) {
+						current_wire[current_wire_pos - 1][3] = Y;
+						current_wire[current_wire_pos][1] = Y;
+					}
+					if (move_line_buffer[move_line_buffer_pos][0] == move_line_buffer[move_line_buffer_pos][2]) {
+						current_wire[current_wire_pos - 1][2] = X;
+						current_wire[current_wire_pos][0] = X;
+					}
 					current_wire[current_wire_pos][2] = X;
 					current_wire[current_wire_pos][3] = Y;
 
@@ -460,8 +466,15 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 void save_to_file(std::string dest){
 	ofstream file_obj;
 	file_obj.open(dest.c_str(), ios::out | ios::trunc | ios::binary);
+
+	file_obj.write((char*)&component_array_pos, sizeof(int));
 	for (int i = 0; i < component_array_pos; i++) {
 		file_obj.write((char*)&component_array[i], sizeof(component_array[i]));
+	}
+
+	file_obj.write((char*)&wire_array_pos, sizeof(int));
+	for (int i = 0; i < wire_array_pos; i++) {
+		file_obj.write((char*)&wire_array[i], sizeof(wire_array[i]));
 	}
 	file_obj.close();
 }
@@ -470,11 +483,18 @@ void open_file(std::string src){
    ifstream file_obj;
    file_obj.open(src.c_str(), ios::in | ios::binary);
    component_array_pos = 0;
-   while (!file_obj.eof()){
-		file_obj.read((char*)&component_array[component_array_pos], sizeof(component_array[component_array_pos]));
-		component_array_pos++;
+   wire_array_pos = 0;
+
+   file_obj.read((char*)&component_array_pos, sizeof(int));
+   for (int i = 0; i < component_array_pos; i++) {
+		file_obj.read((char*)&component_array[i], sizeof(component_array[i]));
    }
-   component_array_pos--;
+
+   file_obj.read((char*)&wire_array_pos, sizeof(int));
+   for (int i = 0; i < wire_array_pos; i++) {
+		file_obj.read((char*)&wire_array[i], sizeof(wire_array[i]));
+   }
+
 }
 //---------------------------------------------------------------------------
 
@@ -507,7 +527,7 @@ void __fastcall TfrmMain::FormCreate(TObject *Sender)
 	Save1 -> Enabled = false;
 	Saveas1 -> Enabled = false;
 	move_step = 2 * grid_width;
-    frmMain -> DoubleBuffered = true;
+	frmMain -> DoubleBuffered = true;
 	pbMain -> Invalidate();
 }
 //---------------------------------------------------------------------------
@@ -673,6 +693,7 @@ void __fastcall TfrmMain::actSaveFileAsExecute(TObject *Sender)
 	if (SaveDialog -> Execute()) {
 		file_dir = AnsiString(SaveDialog -> FileName).c_str();
 		save_to_file(file_dir);
+        frmMain -> Caption = ("LogicBuilder - " + file_dir).c_str();
 		Save1 -> Enabled = true;
 	}
 }
@@ -752,6 +773,33 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 		move_line_buffer[move_line_buffer_pos][3] = Y;
 		pbMain -> Invalidate();
 	}
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TfrmMain::actNewFileExecute(TObject *Sender)
+{
+	Save1 -> Enabled = false;
+	Saveas1 -> Enabled = false;
+
+	component_array_pos = 0;
+	current_component = "";
+
+	wire_array_pos = 0;
+	current_wire_pos = 0;
+	wire_stage = wsBegin;
+
+	x_dot_highlight = -1;
+	y_dot_highlight = -1;
+
+	cursor_mode = true;
+	wire_mode = false;
+	move_line_buffer_pos = 0;
+	selected_comp = -1;
+	selected_wire = -1;
+	file_dir = "";
+
+	pbMain -> Invalidate();
 }
 //---------------------------------------------------------------------------
 
