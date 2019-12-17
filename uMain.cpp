@@ -62,6 +62,8 @@ bool valid_wire_end(int *x0, int *y0){
 			if (abs(*x0 - x) < grid_width && abs(*y0 - y[j]) < grid_width && in_wires[j] == -1) {
 				*x0 = x;
 				*y0 = y[j];
+				if (current_wire_pos == 0 && (*x0 != current_wire[0][0] && *y0 != current_wire[0][1] || *y0 != current_wire[0][1] && *x0 != current_wire[0][0]))
+					return false;
 				return true;
 			}
 		}
@@ -494,9 +496,66 @@ void open_file(std::string src){
    for (int i = 0; i < wire_array_pos; i++) {
 		file_obj.read((char*)&wire_array[i], sizeof(wire_array[i]));
    }
+   file_obj.close();
 
 }
 //---------------------------------------------------------------------------
+
+void to_svg(std::string dest){
+	ofstream file_obj;
+	file_obj.open(dest.c_str(), ios::out | ios::trunc);
+
+	file_obj << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" <<
+		"<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n" <<
+		"<svg version=\"1.1\" baseProfile=\"full\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:ev=\"http://www.w3.org/2001/xml-events\" width=\"100%\" height=\"100%\">\n";
+
+	char temp_str[300];
+	for (int i = 0; i < component_array_pos; i++) {
+		Component entity = component_array[i];
+		sprintf(temp_str, "<rect fill=\"none\" style=\"stroke:black;stroke-width:1\" x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" />\n", entity.get_x(), entity.get_y(), comp_width, comp_height);
+		file_obj << temp_str;
+		int in_y[4] = {0, 0, 0, 0};
+		entity.get_in_y(in_y);
+		for (int i = 0; i < entity.get_entry_amount(); i++) {
+			sprintf(temp_str, "<path fill=\"none\" stroke=\"black\" d=\"M %d %d L %d %d\" />\n", entity.get_x(), in_y[i], entity.get_in_x(), in_y[i]);
+			file_obj << temp_str;
+		}
+		sprintf(temp_str, "<path fill=\"none\" stroke=\"black\" d=\"M %d %d L %d %d\" />\n", entity.get_x() + comp_width, entity.get_out_y(), entity.get_out_x(), entity.get_out_y());
+		file_obj << temp_str;
+
+		std::string comp_type = entity.get_type();
+		if (comp_type[0] == 'n') {
+			sprintf(temp_str, "<circle cx=\"%dpx\" cy=\"%dpx\" r=\"%dpx\" fill=\"white\" stroke=\"black\" />", entity.get_x() + comp_width, entity.get_out_y(), 3);
+			file_obj << temp_str;
+		}
+
+		if (comp_type == "and" || comp_type == "nand") {
+			sprintf(temp_str, "<text x=\"%d\" y=\"%d\" font-size=\"14\" font-family=\"Arial\">%s</text>\n", entity.get_x() + 6, entity.get_y() + 20, "&amp;");
+		}
+		else if (comp_type == "or" || comp_type == "nor") {
+			sprintf(temp_str, "<text x=\"%d\" y=\"%d\" font-size=\"14\" font-family=\"Arial\">%s</text>\n", entity.get_x() + 6, entity.get_y() + 20, "1");
+			}
+			else if (comp_type == "xor" || comp_type == "nxor") {
+				sprintf(temp_str, "<text x=\"%d\" y=\"%d\" font-size=\"13\" font-family=\"Arial\">%s</text>\n", entity.get_x() + 3, entity.get_y() + 20, "=1");
+				}
+		if (comp_type != "not") {
+			file_obj << temp_str;
+		}
+
+	}
+
+	for (int i = 0; i < wire_array_pos; i++) {
+		int lines[10][4];
+		wire_array[i].get_lines(lines);
+		for (int j = 0; j < wire_array[i].get_lines_amount(); j++) {
+			sprintf(temp_str, "<path fill=\"none\" stroke=\"black\" d=\"M %d %d L %d %d\" />\n", lines[j][0], lines[j][1], lines[j][2], lines[j][3]);
+			file_obj << temp_str;
+		}
+	}
+
+	file_obj << "</svg>";
+	file_obj.close();
+}
 
 void __fastcall TfrmMain::pbMainPaint(TObject *Sender)
 {
@@ -526,6 +585,7 @@ void __fastcall TfrmMain::FormCreate(TObject *Sender)
 {
 	Save1 -> Enabled = false;
 	Saveas1 -> Enabled = false;
+	OpenDialog -> Filter = "LogicBuilder filse(.lb)|*.lb|";
 	move_step = 2 * grid_width;
 	frmMain -> DoubleBuffered = true;
 	pbMain -> Invalidate();
@@ -692,12 +752,20 @@ void __fastcall TfrmMain::actSaveFileAsExecute(TObject *Sender)
 {
 	if (SaveDialog -> Execute()) {
 		file_dir = AnsiString(SaveDialog -> FileName).c_str();
-		save_to_file(file_dir);
-        frmMain -> Caption = ("LogicBuilder - " + file_dir).c_str();
+		save_to_file(file_dir + ".lb");
+        frmMain -> Caption = ("LogicBuilder - " + file_dir + ".lb").c_str();
 		Save1 -> Enabled = true;
 	}
 }
 //---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::actSVGExportExecute(TObject *Sender)
+{
+	if (SaveDialog -> Execute()) {
+		file_dir = AnsiString(SaveDialog -> FileName).c_str();
+        to_svg(file_dir);
+	}
+}
 
 void __fastcall TfrmMain::actExitExecute(TObject *Sender)
 {
@@ -755,11 +823,13 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 			component_array[i].get_in_wires(in_wires);
 			for (int j = 0; j < component_array[i].get_entry_amount(); j++) {
 				if (abs(in_x - X) < grid_width && abs(in_y[j] - Y) < grid_width && in_wires[j] == -1) {
-					x_dot_highlight = in_x;
-					y_dot_highlight = in_y[j];
-					draw_dot_highlight(pbMain, x_dot_highlight, y_dot_highlight);
-					exit = true;
-					break;
+					if (!(current_wire_pos == 0 && (X != current_wire[0][0] && Y != current_wire[0][1] || Y != current_wire[0][1] && X != current_wire[0][0]))) {
+						x_dot_highlight = in_x;
+						y_dot_highlight = in_y[j];
+						draw_dot_highlight(pbMain, x_dot_highlight, y_dot_highlight);
+						exit = true;
+						break;
+					}
 				}
 				if (exit)
 					break;

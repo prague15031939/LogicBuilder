@@ -55,6 +55,8 @@ __published:	// IDE-managed Components
 	TListBox *lboxComponents;
 	TAction *actNewFile;
 	TMenuItem *New1;
+	TAction *actSVGExport;
+	TMenuItem *ExporttoSVG1;
 	void __fastcall pbMainPaint(TObject *Sender);
 	void __fastcall FormCreate(TObject *Sender);
 	void __fastcall lboxComponentsDblClick(TObject *Sender);
@@ -75,6 +77,7 @@ __published:	// IDE-managed Components
 	void __fastcall actEndWireExecute(TObject *Sender);
 	void __fastcall pbMainMouseMove(TObject *Sender, TShiftState Shift, int X, int Y);
 	void __fastcall actNewFileExecute(TObject *Sender);
+	void __fastcall actSVGExportExecute(TObject *Sender);
 
 private:	// User declarations
 public:		// User declarations
