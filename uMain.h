@@ -57,6 +57,8 @@ __published:	// IDE-managed Components
 	TMenuItem *New1;
 	TAction *actSVGExport;
 	TMenuItem *ExporttoSVG1;
+	TAction *actBranchWire;
+	TMemo *memo;
 	void __fastcall pbMainPaint(TObject *Sender);
 	void __fastcall FormCreate(TObject *Sender);
 	void __fastcall lboxComponentsDblClick(TObject *Sender);
@@ -78,6 +80,7 @@ __published:	// IDE-managed Components
 	void __fastcall pbMainMouseMove(TObject *Sender, TShiftState Shift, int X, int Y);
 	void __fastcall actNewFileExecute(TObject *Sender);
 	void __fastcall actSVGExportExecute(TObject *Sender);
+	void __fastcall actBranchWireExecute(TObject *Sender);
 
 private:	// User declarations
 public:		// User declarations
@@ -184,6 +187,40 @@ public:
 		this->lines[this->get_lines_amount() - 1][2] = x;
 		this->lines[this->get_lines_amount() - 1][3] = y;
 	}
+	void get_first_line(int *x1, int *y1, int *x2, int *y2){
+		*x1 = this->lines[0][0];
+		*y1 = this->lines[0][1];
+		*x2 = this->lines[0][2];
+		*y2 = this->lines[0][3];
+	}
+	void get_last_line(int *x1, int *y1, int *x2, int *y2){
+		int last = this->get_lines_amount();
+		*x1 = this->lines[last - 1][0];
+		*y1 = this->lines[last - 1][1];
+		*x2 = this->lines[last - 1][2];
+		*y2 = this->lines[last - 1][3];
+	}
+	void set_connected_wire(int value, int index){
+		this->connected_wires[index] = value;
+	}
+	void get_connected_wires(int arr[5]){
+		for (int i = 0; i < 5; i++) {
+			arr[i] = this->connected_wires[i];
+		}
+	}
+	void set_connected_wires_amount(int value){
+		this->connected_wires_amount = value;
+	}
+	int get_connected_wires_amount(){
+		return this->connected_wires_amount;
+	}
+	void set_parent_wire(int value){
+		this->parent_wire = value;
+	}
+	int get_parent_wire(){
+		return this->parent_wire;
+	}
+
 	void get_lines(arr[10][4]){
 		for (int i = 0; i < 10; i++) {
 			for (int j = 0; j < 4; j++) {
@@ -218,5 +255,8 @@ private:
 	int lines[10][4];
 	int lines_amount;
 	int in_component, out_component, out_component_entry;
+	int connected_wires[5];
+	int connected_wires_amount;
+    int parent_wire;
 };
 #endif

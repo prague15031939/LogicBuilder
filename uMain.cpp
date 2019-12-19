@@ -27,6 +27,8 @@ int entry_coords[4][4] = {{25, 0, 0, 0}, {15, 35, 0, 0}, {10, 25, 40, 0}, {10, 2
 int move_step;
 bool cursor_mode = true;
 bool wire_mode = false;
+bool branch_wire_mode = false;
+int parent_wire = -1;
 int move_line_buffer[10][4];
 int move_line_buffer_pos = 0;
 int selected_comp = -1;
@@ -84,6 +86,30 @@ bool valid_wire_start(int *x0, int *y0){
 		}
 	}
 	return false;
+}
+
+int valid_branch_wire_start(int *x0, int *y0){
+
+	for (int i = 0; i < wire_array_pos; i++) {
+		int lines[10][4];
+		wire_array[i].get_lines(lines);
+		for (int j = 0; j < wire_array[i].get_lines_amount(); j++) {
+			if ((abs(*x0 - lines[j][0]) < grid_width && abs(*x0 - lines[j][2]) < grid_width &&
+				(*y0 >= lines[j][1] && *y0 <= lines[j][3] || *y0 <= lines[j][1] && *y0 >= lines[j][3])) ||
+				(abs(*y0 - lines[j][1]) < grid_width && abs(*y0 - lines[j][3]) < grid_width &&
+				(*x0 >= lines[j][0] && *x0 <= lines[j][2] || *x0 <= lines[j][0] && *x0 >= lines[j][2]))) {
+
+				if (lines[j][2] - lines[j][0] != 0){
+					*y0 = lines[j][1];
+				}
+				else if (lines[j][3] - lines[j][1] != 0) {
+					 *x0 = lines[j][2];
+					 }
+				return i;
+			}
+		}
+	}
+	return -1;
 }
 
 bool valid_place(int x0, int y0, int except = -1){
@@ -217,6 +243,33 @@ void add_component(int X, int Y){
 	frmMain -> Saveas1 -> Enabled = true;
 }
 
+void delete_in_component_in_all_connected_wires(int out_wire){
+
+	int connected_wires[5];
+	wire_array[out_wire].get_connected_wires(connected_wires);
+	for (int i = 0; i < wire_array[out_wire].get_connected_wires_amount(); i++) {
+		wire_array[connected_wires[i]].set_in_out_component(-1, wire_array[connected_wires[i]].get_out_component());
+		delete_in_component_in_all_connected_wires(connected_wires[i]);
+	}
+
+}
+
+void decrease_components_index(int index){
+
+	for (int i = 0; i < wire_array_pos; i++) {
+		int in_comp, out_comp;
+		in_comp = wire_array[i].get_in_component();
+		out_comp = wire_array[i].get_out_component();
+		if (in_comp != -1 && in_comp >= index)
+			in_comp--;
+		if (out_comp != -1 && out_comp >= index)
+			out_comp--;
+		if (out_comp == -1)
+			wire_array[i].set_out_component_entry(-1);
+		wire_array[i].set_in_out_component(in_comp, out_comp);
+	}
+}
+
 void delete_component(int target){
 	int in_wires[4];
 	component_array[target].get_in_wires(in_wires);
@@ -229,12 +282,14 @@ void delete_component(int target){
 	int out_wire = component_array[target].get_out_wire();
 	if (out_wire != -1) {
 		wire_array[out_wire].set_in_out_component(-1, wire_array[out_wire].get_out_component());
+		delete_in_component_in_all_connected_wires(out_wire);
 	}
 
 	for (int i = target; i < component_array_pos - 1; i++) {
 		component_array[i] = component_array[i + 1];
 	}
 	component_array_pos--;
+	decrease_components_index(target);
 
 	frmMain -> Saveas1 -> Enabled = true;
 }
@@ -242,11 +297,28 @@ void delete_component(int target){
 void add_wire(int item[10][4]){
 	int start;
 	int end[2] = {-1, -1};
-	start = find_start_component(item[0][0], item[0][1]);
+	if (!branch_wire_mode)
+		start = find_start_component(item[0][0], item[0][1]);
+	else {
+		start = wire_array[parent_wire].get_in_component();
+		int temp = wire_array[parent_wire].get_connected_wires_amount();
+		wire_array[parent_wire].set_connected_wire(wire_array_pos, temp++);
+		wire_array[parent_wire].set_connected_wires_amount(temp);
+	}
 	find_end_component(end, item[current_wire_pos][2], item[current_wire_pos][3]);
 
-	component_array[start].set_out_wire(wire_array_pos);
+	if (!branch_wire_mode) {
+		component_array[start].set_out_wire(wire_array_pos);
+		wire_array[wire_array_pos].set_parent_wire(-1);
+	}
+	else
+        wire_array[wire_array_pos].set_parent_wire(parent_wire);
 	component_array[end[0]].set_in_wire(wire_array_pos, end[1]);
+
+	for (int i = 0; i < 5; i++) {
+		wire_array[wire_array_pos].set_connected_wire(-1, i);
+	}
+	wire_array[wire_array_pos].set_connected_wires_amount(0);
 
 	wire_array[wire_array_pos].set_in_out_component(start, end[0]);
 	wire_array[wire_array_pos].set_out_component_entry(end[1]);
@@ -254,17 +326,89 @@ void add_wire(int item[10][4]){
 	wire_array[wire_array_pos++].set_lines_amount(++current_wire_pos);
 }
 
+void decrease_wires_index(int index){
+
+	for (int i = 0; i < component_array_pos; i++) {
+		int out_wire;
+		out_wire = component_array[i].get_out_wire();
+		if (out_wire != -1 && out_wire >= index)
+			component_array[i].set_out_wire(out_wire - 1);
+		int in_wires[4];
+		component_array[i].get_in_wires(in_wires);
+		for (int j = 0; j < component_array[i].get_entry_amount(); j++)
+			if (in_wires[j] != -1 && in_wires[j] >= index)
+				component_array[i].set_in_wire(in_wires[j] - 1, j);
+	}
+
+	for (int i = 0; i < wire_array_pos; i++) {
+		int parent_wire = wire_array[i].get_parent_wire();
+		if (parent_wire != -1 && parent_wire >= index)
+			wire_array[i].set_parent_wire(parent_wire - 1);
+		int connected_wires[5];
+		wire_array[i].get_connected_wires(connected_wires);
+		for (int j = 0; j < wire_array[i].get_connected_wires_amount(); j++)
+			if (connected_wires[j] != -1 && connected_wires[j] >= index)
+				connected_wires[j]--;
+
+		int k = 0;
+		for (int j = 0; j < 5; j++)
+			if (connected_wires[j] != -1)
+				wire_array[i].set_connected_wire(connected_wires[j], k++);
+		wire_array[i].set_connected_wires_amount(k);
+		for (k; k < 5; k++)
+			wire_array[i].set_connected_wire(-1, k);
+	}
+}
+
 void delete_wire(int target){
-	int in_comp = wire_array[target].get_in_component();
-	component_array[in_comp].set_out_wire(-1);
+
+	delete_in_component_in_all_connected_wires(target);
+
+	int connected_wires[5];
+	wire_array[target].get_connected_wires(connected_wires);
+	for (int i = 0; i < wire_array[target].get_connected_wires_amount(); i++)
+		wire_array[connected_wires[i]].set_parent_wire(-1);
+
+	int parent = wire_array[target].get_parent_wire();
+	if (parent != -1) {
+		int connected_wires[5];
+		wire_array[parent].get_connected_wires(connected_wires);
+		for (int i = 0; i < wire_array[parent].get_connected_wires_amount(); i++) {
+			if (connected_wires[i] == target) {
+				connected_wires[i] = -1;
+				int k = 0;
+				for (int j = 0; j < 5; j++)
+					if (connected_wires[j] != -1)
+						wire_array[parent].set_connected_wire(connected_wires[j], k++);
+				for (k; k < 5; k++)
+					wire_array[parent].set_connected_wire(-1, k);
+				wire_array[parent].set_connected_wires_amount(wire_array[parent].get_connected_wires_amount() - 1);
+				break;
+			}
+		}
+	}
+
+	if (parent == -1) {
+		int in_comp = wire_array[target].get_in_component();
+		if (in_comp != -1)
+			component_array[in_comp].set_out_wire(-1);
+	}
 
 	int out_comp = wire_array[target].get_out_component();
-	component_array[out_comp].set_in_wire(-1, wire_array[target].get_out_component_entry());
+	int in_wires[4];
+	component_array[out_comp].get_in_wires(in_wires);
+	for (int i = 0; i < component_array[out_comp].get_entry_amount(); i++) {
+		if (in_wires[i] == target) {
+			component_array[out_comp].set_in_wire(-1, i);
+			break;
+		}
+	}
 
 	for (int i = target; i < wire_array_pos - 1; i++) {
 		wire_array[i] = wire_array[i + 1];
 	}
 	wire_array_pos--;
+	decrease_wires_index(target);
 
 	frmMain -> Saveas1 -> Enabled = true;
 }
@@ -411,7 +555,9 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 
 		switch (wire_stage) {
 			case wsBegin:
-				if (valid_wire_start(&X, &Y)) {
+				if (branch_wire_mode)
+					parent_wire = valid_branch_wire_start(&X, &Y);
+				if (valid_wire_start(&X, &Y) && !branch_wire_mode || branch_wire_mode && parent_wire != -1) {
 					current_wire[current_wire_pos][0] = X;
 					current_wire[current_wire_pos][1] = Y;
 					wire_stage = wsMiddle;
@@ -557,6 +703,31 @@ void to_svg(std::string dest){
 	file_obj.close();
 }
 
+void logger(){
+	ofstream file_obj;
+	file_obj.open("log.txt", ios::out | ios::trunc);
+
+	for (int i = 0; i < component_array_pos; i++) {
+		file_obj << "component #" << i << ":\n";
+		file_obj << component_array[i].get_type() << " " << component_array[i].get_entry_amount() << "\n";
+		int in_wires[4];
+		component_array[i].get_in_wires(in_wires);
+		file_obj << "in wires: " << in_wires[0] << " " << in_wires[1] << " "  << in_wires[2] << " "  << in_wires[3] << "\n";
+		file_obj << "out wire: " << component_array[i].get_out_wire() << "\n\n";
+	}
+
+	for (int i = 0; i < wire_array_pos; i++) {
+		file_obj << "wire #" << i << ":\n";
+		file_obj << "in_component: " << wire_array[i].get_in_component() << "\n";
+		file_obj << "out_component: " << wire_array[i].get_out_component() << ", entry: " << wire_array[i].get_out_component_entry() << "\n";
+		int connected_wires[5];
+		wire_array[i].get_connected_wires(connected_wires);
+		file_obj << "connected wires: " << connected_wires[0] << " " << connected_wires[1] << " "  << connected_wires[2] << " "  << connected_wires[3] << " " << connected_wires[4] << "\n";
+		file_obj << "parent wire: " << wire_array[i].get_parent_wire() << "\n\n";
+	}
+	file_obj.close();
+}
+
 void __fastcall TfrmMain::pbMainPaint(TObject *Sender)
 {
 	draw_grid(pbMain);
@@ -606,35 +777,63 @@ void __fastcall TfrmMain::actTakeCursorExecute(TObject *Sender)
 {
 	cursor_mode = true;
 	wire_mode = false;
+	branch_wire_mode = false;
 	current_component = "";
+	logger();
 }
 //---------------------------------------------------------------------------
 
-Component modify_component_position(Component entity, int new_x, int new_y){
-
-	entity.set_coords(new_x, new_y);
-	entity.set_in_x(new_x - wire_length);
-	entity.set_out_x(new_x + comp_width + wire_length);
-	entity.set_out_y(new_y + (int)comp_height / 2);
-
-	int in_y[4] = {0, 0, 0, 0};
-	int num = entity.get_entry_amount();
-	for (int i = 0; i < num; i++) {
-		in_y[i] = new_y + entry_coords[num - 1][i];
-	}
-	entity.set_in_y(in_y);
-
-	int out_wire = entity.get_out_wire();
-	if (out_wire != -1) {
-		wire_array[out_wire].set_first_coords(new_x + comp_width + wire_length, new_y + (int)comp_height / 2);
-	}
-	int in_wires[4] = {-1, -1, -1, -1};
-	entity.get_in_wires(in_wires);
-	for (int i = 0; i < num; i++) {
-		if (in_wires[i] != -1) {
-			wire_array[in_wires[i]].set_last_coords(new_x - wire_length, new_y + entry_coords[num - 1][i]);
+bool valid_local_line_is_alone(int target_wire, int mode){
+	if (wire_array[target_wire].get_connected_wires_amount() != 0) {
+		int connected_wires[5];
+		wire_array[target_wire].get_connected_wires(connected_wires);
+		int x01, y01, x02, y02;
+		if (mode == 1)
+			wire_array[target_wire].get_first_line(&x01, &y01, &x02, &y02);
+		else
+			wire_array[target_wire].get_last_line(&x01, &y01, &x02, &y02);
+		for (int j = 0; j < wire_array[target_wire].get_connected_wires_amount(); j++) {
+			int x1, y1, x2, y2;
+			wire_array[connected_wires[j]].get_first_line(&x1, &y1, &x2, &y2);
+			if ((y1 >= y01 && y1 <= y02 || y1 <= y01 && y1 >= y01) &&
+				(x1 >= x01 && x1 <= x02 || x1 <= x01 && x1 >= x01)) {
+				return false;
+			}
 		}
 	}
+	return true;
+}
+
+Component modify_component_position(Component entity, int new_x, int new_y){
+
+	int out_wire = entity.get_out_wire();
+	if (out_wire != -1)
+		if (!valid_local_line_is_alone(out_wire, 1))
+			return entity;
+
+	int in_wires[4] = {-1, -1, -1, -1};
+	entity.get_in_wires(in_wires);
+	int num = entity.get_entry_amount();
+	for (int i = 0; i < num; i++)
+		if (in_wires[i] != -1)
+			if (!valid_local_line_is_alone(in_wires[i], 0))
+				return entity;
+
+	for (int i = 0; i < num; i++)
+		if (in_wires[i] != -1)
+			wire_array[in_wires[i]].set_last_coords(new_x - wire_length, new_y + entry_coords[num - 1][i]);
+	if (out_wire != -1)
+		wire_array[out_wire].set_first_coords(new_x + comp_width + wire_length, new_y + (int)comp_height / 2);
+
+	entity.set_coords(new_x, new_y);
+	entity.set_out_x(new_x + comp_width + wire_length);
+	entity.set_out_y(new_y + (int)comp_height / 2);
+	entity.set_in_x(new_x - wire_length);
+
+	int in_y[4] = {0, 0, 0, 0};
+	for (int i = 0; i < num; i++)
+		in_y[i] = new_y + entry_coords[num - 1][i];
+	entity.set_in_y(in_y);
 
 	return entity;
 }
@@ -776,6 +975,7 @@ void __fastcall TfrmMain::actExitExecute(TObject *Sender)
 void __fastcall TfrmMain::actSetWireModeExecute(TObject *Sender)
 {
 	wire_mode = true;
+	branch_wire_mode = false;
 	wire_stage = wsBegin;
 	cursor_mode = false;
 	current_component = "";
@@ -800,40 +1000,27 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 	}
 
 	if (wire_mode && wire_stage == wsBegin) {
-		for (int i = 0; i < component_array_pos; i++) {
-			int out_x, out_y;
-			out_x = component_array[i].get_out_x();
-			out_y = component_array[i].get_out_y();
-			int out_wire = component_array[i].get_out_wire();
-			if (abs(out_x - X) < grid_width && abs(out_y - Y) < grid_width && out_wire == -1) {
-				x_dot_highlight = out_x;
-				y_dot_highlight = out_y;
+		if (!branch_wire_mode) {
+			if (valid_wire_start(&X, &Y)) {
+				x_dot_highlight = X;
+				y_dot_highlight = Y;
 				draw_dot_highlight(pbMain, x_dot_highlight, y_dot_highlight);
-				break;
 			}
 		}
+		else{
+			if (valid_branch_wire_start(&X, &Y) != -1) {
+				x_dot_highlight = X;
+				y_dot_highlight = Y;
+				draw_dot_highlight(pbMain, x_dot_highlight, y_dot_highlight);
+			}
+        }
 	}
 
 	if (wire_mode && wire_stage == wsEnd) {
-		for (int i = 0; i < component_array_pos; i++) {
-			bool exit = false;
-			int in_x, in_y[4], in_wires[4];
-			in_x = component_array[i].get_in_x();
-			component_array[i].get_in_y(in_y);
-			component_array[i].get_in_wires(in_wires);
-			for (int j = 0; j < component_array[i].get_entry_amount(); j++) {
-				if (abs(in_x - X) < grid_width && abs(in_y[j] - Y) < grid_width && in_wires[j] == -1) {
-					if (!(current_wire_pos == 0 && (X != current_wire[0][0] && Y != current_wire[0][1] || Y != current_wire[0][1] && X != current_wire[0][0]))) {
-						x_dot_highlight = in_x;
-						y_dot_highlight = in_y[j];
-						draw_dot_highlight(pbMain, x_dot_highlight, y_dot_highlight);
-						exit = true;
-						break;
-					}
-				}
-				if (exit)
-					break;
-			}
+		if (valid_wire_end(&X, &Y)) {
+			x_dot_highlight = X;
+			y_dot_highlight = Y;
+			draw_dot_highlight(pbMain, x_dot_highlight, y_dot_highlight);
 		}
 	}
 
@@ -870,6 +1057,16 @@ void __fastcall TfrmMain::actNewFileExecute(TObject *Sender)
 	file_dir = "";
 
 	pbMain -> Invalidate();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::actBranchWireExecute(TObject *Sender)
+{
+	wire_mode = true;
+    branch_wire_mode = true;
+	wire_stage = wsBegin;
+	cursor_mode = false;
+	current_component = "";
 }
 //---------------------------------------------------------------------------
 
