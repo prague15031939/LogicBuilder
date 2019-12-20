@@ -31,7 +31,7 @@ __published:	// IDE-managed Components
 	TPaintBox *pbMain;
 	TMainMenu *menuMain;
 	TMenuItem *File1;
-	TMenuItem *Settings1;
+	TMenuItem *Tools1;
 	TMenuItem *Open1;
 	TMenuItem *Save1;
 	TMenuItem *Saveas1;
@@ -60,6 +60,16 @@ __published:	// IDE-managed Components
 	TAction *actSVGExport;
 	TMenuItem *ExporttoSVG1;
 	TAction *actBranchWire;
+	TMenuItem *btnCursor;
+	TMenuItem *btnWire;
+	TMenuItem *btnBranchWire;
+	TMenuItem *btnEndWire;
+	TMenuItem *actDeleteComponent1;
+	TMenuItem *actCheangeMoveStep1;
+	TMenuItem *N1;
+	TMenuItem *N2;
+	TAction *actDrawGrid;
+	TMenuItem *actDrawGrid1;
 	void __fastcall pbMainPaint(TObject *Sender);
 	void __fastcall FormCreate(TObject *Sender);
 	void __fastcall lboxComponentsDblClick(TObject *Sender);
@@ -82,6 +92,7 @@ __published:	// IDE-managed Components
 	void __fastcall actNewFileExecute(TObject *Sender);
 	void __fastcall actSVGExportExecute(TObject *Sender);
 	void __fastcall actBranchWireExecute(TObject *Sender);
+	void __fastcall actDrawGridExecute(TObject *Sender);
 
 private:	// User declarations
 public:		// User declarations

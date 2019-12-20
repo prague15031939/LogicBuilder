@@ -37,13 +37,16 @@ extern std::string file_dir;
 
 void add_component(int X, int Y){
 	Component entity;
-	if (!(current_component == "not")) {
+	if (!(current_component == "not" || current_component == "src" || current_component == "probe")) {
 		entity.set_type(fetch_component_name(current_component));
 		entity.set_entry_amount(current_component[current_component.length() - 1] - '0');
 	}
 	else{
-		entity.set_type("not");
-		entity.set_entry_amount(1);
+		entity.set_type(current_component);
+		if (current_component != "src")
+			entity.set_entry_amount(1);
+		else
+			entity.set_entry_amount(0);
 	}
 	entity.set_coords(X, Y);
 

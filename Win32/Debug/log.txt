@@ -1,10 +1,55 @@
 component #0:
-nor 3
-in wires: -1 -1 -1 -1
-out wire: -1
+not 1
+in wires: 0 -1 -1 -1
+out wire: 2
 
 component #1:
-xor 4
+src 0
 in wires: -1 -1 -1 -1
+out wire: 0
+
+component #2:
+probe 1
+in wires: 4 -1 -1 -1
 out wire: -1
+
+component #3:
+nand 3
+in wires: -1 1 -1 -1
+out wire: 3
+
+component #4:
+nand 2
+in wires: 3 2 -1 -1
+out wire: 4
+
+wire #0:
+in_component: 1
+out_component: 0, entry: 0
+connected wires: 1 -1 -1 -1 -1
+parent wire: -1
+
+wire #1:
+in_component: 1
+out_component: 3, entry: 1
+connected wires: -1 -1 -1 -1 -1
+parent wire: 0
+
+wire #2:
+in_component: 0
+out_component: 4, entry: 1
+connected wires: -1 -1 -1 -1 -1
+parent wire: -1
+
+wire #3:
+in_component: 3
+out_component: 4, entry: 0
+connected wires: -1 -1 -1 -1 -1
+parent wire: -1
+
+wire #4:
+in_component: 4
+out_component: 2, entry: 0
+connected wires: -1 -1 -1 -1 -1
+parent wire: -1
 

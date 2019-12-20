@@ -43,25 +43,46 @@ void draw_component(TPaintBox *pb, Component entity){
 	X = entity.get_x();
 	Y = entity.get_y();
 	std::string comp_type = entity.get_type();
+    pb -> Font -> Size = 8;
 
-	pb -> Canvas -> Rectangle(X, Y, X + comp_width, Y + comp_height);
-	pb -> Font -> Size = 8;
+	if (!(comp_type == "src" || comp_type == "probe")) {
+		pb -> Canvas -> Rectangle(X, Y, X + comp_width, Y + comp_height);
 
-	draw_entries(pb, entity);
-	pb -> Canvas -> MoveTo(X + comp_width, entity.get_out_y());
-	pb -> Canvas -> LineTo(entity.get_out_x(), entity.get_out_y());
+		draw_entries(pb, entity);
+		pb -> Canvas -> MoveTo(X + comp_width, entity.get_out_y());
+		pb -> Canvas -> LineTo(entity.get_out_x(), entity.get_out_y());
 
-	if (comp_type == "and" || comp_type == "nand") {
-		pb -> Canvas -> TextOut(X + 6, Y + 5, "&");
-	}
-	else if (comp_type == "or" || comp_type == "nor") {
-		pb -> Canvas -> TextOut(X + 7, Y + 5, "1");
+		if (comp_type == "and" || comp_type == "nand") {
+			pb -> Canvas -> TextOut(X + 6, Y + 5, "&");
 		}
-		else if (comp_type == "xor" || comp_type == "nxor") {
-			pb -> Canvas -> TextOut(X + 2, Y + 5, "=1");
+		else if (comp_type == "or" || comp_type == "nor") {
+			pb -> Canvas -> TextOut(X + 7, Y + 5, "1");
 			}
-	if (comp_type[0] == 'n') {
-		pb -> Canvas -> Ellipse(X + comp_width - 3, (int)Y + comp_height / 2 - 3, X + comp_width + 3, (int)Y + comp_height / 2 + 3);
+			else if (comp_type == "xor" || comp_type == "nxor") {
+				pb -> Canvas -> TextOut(X + 2, Y + 5, "=1");
+				}
+		if (comp_type[0] == 'n') {
+			pb -> Canvas -> Ellipse(X + comp_width - 3, (int)Y + comp_height / 2 - 3, X + comp_width + 3, (int)Y + comp_height / 2 + 3);
+		}
+	}
+
+	else if (comp_type == "src") {
+		pb -> Canvas -> Rectangle(X, Y + (int) comp_height * 0.3, X + comp_width, Y + (int) comp_height * 0.75);
+		//pb -> Canvas -> Brush -> Color = clRed;
+		pb -> Canvas -> FillRect(Rect(X + 1, Y + (int) comp_height * 0.3 + 1, X + comp_width - 1, Y + (int) comp_height * 0.75 - 1));
+		pb -> Canvas -> Brush -> Color = clWhite;
+		draw_entries(pb, entity);
+		pb -> Canvas -> MoveTo(X + comp_width, entity.get_out_y());
+		pb -> Canvas -> LineTo(entity.get_out_x(), entity.get_out_y());
+	}
+	else{
+		//pb -> Canvas -> Brush -> Color = clRed;
+		pb -> Canvas -> Ellipse(X, Y, X + comp_width, Y + comp_width);
+        pb -> Canvas -> Brush -> Color = clWhite;
+		pb -> Canvas -> MoveTo(X + (int) comp_width / 2, Y + comp_width);
+		pb -> Canvas -> LineTo(X + (int) comp_width / 2, Y + (int) comp_height / 2);
+		pb -> Canvas -> MoveTo(entity.get_in_x(), entity.get_out_y());
+		pb -> Canvas -> LineTo(entity.get_out_x(), entity.get_out_y());
 	}
 }
 

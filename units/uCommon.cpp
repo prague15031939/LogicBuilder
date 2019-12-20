@@ -32,6 +32,7 @@ int selected_comp = -1;
 int selected_wire = -1;
 
 std::string file_dir = "";
+bool to_draw_grid = true;
 
 //---------------------------------------------------------------------------
 #pragma package(smart_init)

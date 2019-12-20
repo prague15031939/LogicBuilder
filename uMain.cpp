@@ -42,6 +42,7 @@ extern int selected_comp;
 extern int selected_wire;
 
 extern std::string file_dir;
+extern bool to_draw_grid;
 //---------------------------------------------------------------------------
 __fastcall TfrmMain::TfrmMain(TComponent* Owner)
 	: TForm(Owner)
@@ -272,7 +273,8 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 
 void __fastcall TfrmMain::pbMainPaint(TObject *Sender)
 {
-	draw_grid(pbMain);
+	if (to_draw_grid)
+		draw_grid(pbMain);
 	for (int i = 0; i < component_array_pos; i++) {
 		draw_component(pbMain, component_array[i]);
 	}
@@ -473,7 +475,8 @@ void __fastcall TfrmMain::actSetWireModeExecute(TObject *Sender)
 
 void __fastcall TfrmMain::actEndWireExecute(TObject *Sender)
 {
-	wire_stage = wsEnd;
+	if (wire_mode)
+        wire_stage = wsEnd;
 }
 //---------------------------------------------------------------------------
 
@@ -556,6 +559,12 @@ void __fastcall TfrmMain::actBranchWireExecute(TObject *Sender)
 	wire_stage = wsBegin;
 	cursor_mode = false;
 	current_component = "";
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::actDrawGridExecute(TObject *Sender)
+{
+	to_draw_grid = to_draw_grid ? false : true;
 }
 //---------------------------------------------------------------------------
 
