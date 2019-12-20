@@ -63,8 +63,8 @@
         <UWP_CppLogo44>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_44.png</UWP_CppLogo44>
         <UWP_CppLogo150>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_150.png</UWP_CppLogo150>
         <SanitizedProjectName>LogicBuilder</SanitizedProjectName>
-        <IncludePath>курсач\;$(IncludePath)</IncludePath>
-        <ILINK_LibraryPath>курсач\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
+        <IncludePath>units\;курсач\;$(IncludePath)</IncludePath>
+        <ILINK_LibraryPath>units\;курсач\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <PackageImports>adortl;appanalytics;bcbie;bcbsmp;bindcomp;bindcompdbx;bindcompfmx;bindcompvcl;bindengine;CloudService;CustomIPTransport;dbexpress;dbrtl;dbxcds;DbxClientDriver;DbxCommonDriver;DBXInterBaseDriver;DBXMySQLDriver;DBXSqliteDriver;dsnap;dsnapcon;dsnapxml;FireDAC;FireDACADSDriver;FireDACCommon;FireDACCommonDriver;FireDACCommonODBC;FireDACIBDriver;FireDACMSAccDriver;FireDACMySQLDriver;FireDACPgDriver;FireDACSqliteDriver;fmx;fmxase;fmxdae;fmxFireDAC;fmxobj;IndyCore;IndyIPClient;IndyIPCommon;IndyIPServer;IndyProtocols;IndySystem;inet;inetdb;inetdbxpress;RESTBackendComponents;RESTComponents;rtl;soapmidas;soaprtl;soapserver;svn;tethering;vcl;vclactnband;vcldb;vcldsnap;vclFireDAC;vclie;vclimg;VCLRESTComponents;VclSmp;vcltouch;vclwinx;vclx;xmlrtl;$(PackageImports)</PackageImports>
@@ -132,31 +132,31 @@
             <BuildOrder>1</BuildOrder>
             <PCH>true</PCH>
         </PCHCompile>
-        <CppCompile Include="uCommon.cpp">
-            <DependentOn>uCommon.h</DependentOn>
-            <BuildOrder>3</BuildOrder>
-        </CppCompile>
-        <CppCompile Include="uComponent.cpp">
-            <DependentOn>uComponent.h</DependentOn>
-            <BuildOrder>4</BuildOrder>
-        </CppCompile>
         <CppCompile Include="uMain.cpp">
             <Form>frmMain</Form>
             <FormType>dfm</FormType>
             <DependentOn>uMain.h</DependentOn>
             <BuildOrder>2</BuildOrder>
         </CppCompile>
-        <CppCompile Include="uValidation.cpp">
-            <DependentOn>uValidation.h</DependentOn>
+        <CppCompile Include="units\uCommon.cpp">
+            <DependentOn>units\uCommon.h</DependentOn>
+            <BuildOrder>3</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="units\uComponent.cpp">
+            <DependentOn>units\uComponent.h</DependentOn>
+            <BuildOrder>4</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="units\uValidation.cpp">
+            <DependentOn>units\uValidation.h</DependentOn>
+            <BuildOrder>5</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="units\uView.cpp">
+            <DependentOn>units\uView.h</DependentOn>
             <BuildOrder>6</BuildOrder>
         </CppCompile>
-        <CppCompile Include="uView.cpp">
-            <DependentOn>uView.h</DependentOn>
+        <CppCompile Include="units\uWire.cpp">
+            <DependentOn>units\uWire.h</DependentOn>
             <BuildOrder>7</BuildOrder>
-        </CppCompile>
-        <CppCompile Include="uWire.cpp">
-            <DependentOn>uWire.h</DependentOn>
-            <BuildOrder>5</BuildOrder>
         </CppCompile>
         <FormResources Include="uMain.dfm"/>
         <BuildConfiguration Include="Release">
