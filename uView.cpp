@@ -1,0 +1,155 @@
+//---------------------------------------------------------------------------
+
+#pragma hdrstop
+
+#include "uView.h"
+#include "uCommon.h"
+
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+
+extern Component component_array[100];
+extern int component_array_pos;
+extern std::string current_component;
+
+extern Wire wire_array[300];
+extern int wire_array_pos;
+extern int current_wire[10][4];
+extern int current_wire_pos;
+typedef enum {wsBegin, wsMiddle, wsEnd} TWireStage;
+extern TWireStage wire_stage;
+
+extern int x_dot_highlight;
+extern int y_dot_highlight;
+
+extern int comp_width, comp_height, wire_length, grid_width;
+extern int entry_coords[4][4];
+extern int move_step;
+extern bool cursor_mode;
+extern bool wire_mode;
+extern bool branch_wire_mode;
+extern int parent_wire;
+extern int move_line_buffer[10][4];
+extern int move_line_buffer_pos;
+extern int selected_comp;
+extern int selected_wire;
+
+extern std::string file_dir;
+
+
+void draw_component(TPaintBox *pb, Component entity){
+
+	int X, Y;
+	X = entity.get_x();
+	Y = entity.get_y();
+	std::string comp_type = entity.get_type();
+
+	pb -> Canvas -> Rectangle(X, Y, X + comp_width, Y + comp_height);
+	pb -> Font -> Size = 8;
+
+	draw_entries(pb, entity);
+	pb -> Canvas -> MoveTo(X + comp_width, entity.get_out_y());
+	pb -> Canvas -> LineTo(entity.get_out_x(), entity.get_out_y());
+
+	if (comp_type == "and" || comp_type == "nand") {
+		pb -> Canvas -> TextOut(X + 6, Y + 5, "&");
+	}
+	else if (comp_type == "or" || comp_type == "nor") {
+		pb -> Canvas -> TextOut(X + 7, Y + 5, "1");
+		}
+		else if (comp_type == "xor" || comp_type == "nxor") {
+			pb -> Canvas -> TextOut(X + 2, Y + 5, "=1");
+			}
+	if (comp_type[0] == 'n') {
+		pb -> Canvas -> Ellipse(X + comp_width - 3, (int)Y + comp_height / 2 - 3, X + comp_width + 3, (int)Y + comp_height / 2 + 3);
+	}
+}
+
+void draw_entries(TPaintBox *pb, Component entity){
+	int in_y[4] = {0, 0, 0, 0};
+	entity.get_in_y(in_y);
+	for (int i = 0; i < entity.get_entry_amount(); i++) {
+		pb -> Canvas -> MoveTo(entity.get_x(), in_y[i]);
+		pb -> Canvas -> LineTo(entity.get_in_x(), in_y[i]);
+	}
+}
+
+void draw_wire(TPaintBox *pb, Wire entity){
+
+	int lines_amount;
+	lines_amount = entity.get_lines_amount();
+	int lines[10][4];
+	entity.get_lines(lines);
+
+	for (int i = 0; i < lines_amount; i++) {
+		pb -> Canvas -> MoveTo(lines[i][0], lines[i][1]);
+		pb -> Canvas -> LineTo(lines[i][2], lines[i][3]);
+	}
+}
+
+void draw_temp_lines(TPaintBox *pb){
+	for (int i = 0; i <= move_line_buffer_pos; i++) {
+		pb -> Canvas -> MoveTo(move_line_buffer[i][0], move_line_buffer[i][1]);
+		pb -> Canvas -> LineTo(move_line_buffer[i][2], move_line_buffer[i][3]);
+	}
+}
+
+void draw_highlight(TPaintBox *pb, int i){
+
+	pb -> Canvas -> Pen -> Color = clHighlight;
+	pb -> Canvas -> Pen -> Style = psDash;
+
+	int x, y;
+	x = component_array[i].get_x();
+	y = component_array[i].get_y();
+	pb -> Canvas -> MoveTo(x - wire_length - 1, y - 1);
+	pb -> Canvas -> LineTo(x + comp_width + wire_length + 1, y - 1);
+	pb -> Canvas -> LineTo(x + comp_width + wire_length + 1, y + comp_height + 1);
+	pb -> Canvas -> LineTo(x - wire_length - 1, y + comp_height + 1);
+	pb -> Canvas -> LineTo(x - wire_length - 1, y - 1);
+
+	pb -> Canvas -> Pen -> Color = clBlack;
+	pb -> Canvas -> Pen -> Style = psSolid;
+}
+
+void draw_wire_highlight(TPaintBox *pb, int i){
+
+	pb -> Canvas -> Pen -> Color = clRed;
+	pb -> Canvas -> Pen -> Width += 1;
+
+	draw_wire(pb, wire_array[i]);
+
+	pb -> Canvas -> Pen -> Color = clBlack;
+	pb -> Canvas -> Pen -> Width -= 1;
+}
+
+void draw_dot_highlight(TPaintBox *pb, int x, int y){
+	pb -> Canvas -> Brush -> Color = clRed;
+	pb -> Canvas -> Pen -> Color = clRed;
+	pb -> Canvas -> Pie(x - 3, y - 3, x + 3, y + 3, 0, 0, 0, 0);
+	pb -> Canvas -> Brush -> Color = clBlack;
+	pb -> Canvas -> Pen -> Color = clBlack;
+}
+
+void draw_grid(TPaintBox *pb){
+	pb -> Canvas -> Pen -> Color = clBtnFace;
+	int x_line = 0, y_line = 0;
+	for (int i = 0; i < (int)pb->Width / grid_width; i++) {
+		pb -> Canvas -> MoveTo(x_line, 0);
+		pb -> Canvas -> LineTo(x_line, pb->Height);
+		x_line += grid_width;
+	}
+	for (int i = 0; i < (int)pb->Height / grid_width; i++) {
+		pb -> Canvas -> MoveTo(0, y_line);
+		pb -> Canvas -> LineTo(pb -> Width, y_line);
+		y_line += grid_width;
+	}
+	pb -> Canvas -> Pen -> Color = clBlack;
+}
+
+
+
+
+
+
+

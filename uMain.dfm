@@ -71,13 +71,6 @@ object frmMain: TfrmMain
     TabOrder = 0
     OnDblClick = lboxComponentsDblClick
   end
-  object memo: TMemo
-    Left = 96
-    Top = 24
-    Width = 185
-    Height = 321
-    TabOrder = 1
-  end
   object menuMain: TMainMenu
     Images = ImageList
     Left = 216

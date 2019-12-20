@@ -132,11 +132,31 @@
             <BuildOrder>1</BuildOrder>
             <PCH>true</PCH>
         </PCHCompile>
+        <CppCompile Include="uCommon.cpp">
+            <DependentOn>uCommon.h</DependentOn>
+            <BuildOrder>3</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="uComponent.cpp">
+            <DependentOn>uComponent.h</DependentOn>
+            <BuildOrder>4</BuildOrder>
+        </CppCompile>
         <CppCompile Include="uMain.cpp">
             <Form>frmMain</Form>
             <FormType>dfm</FormType>
             <DependentOn>uMain.h</DependentOn>
             <BuildOrder>2</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="uValidation.cpp">
+            <DependentOn>uValidation.h</DependentOn>
+            <BuildOrder>6</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="uView.cpp">
+            <DependentOn>uView.h</DependentOn>
+            <BuildOrder>7</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="uWire.cpp">
+            <DependentOn>uWire.h</DependentOn>
+            <BuildOrder>5</BuildOrder>
         </CppCompile>
         <FormResources Include="uMain.dfm"/>
         <BuildConfiguration Include="Release">

@@ -1,16 +1,31 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>1899.12.30 00:00:00.000.940,=D:\Works builder\Project1PCH1.h</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.371,D:\Works builder\курсач\LogicBuilderPCH1.h=D:\Works builder\LogicBuilderPCH1.h</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.267,=D:\Works builder\Unit1.cpp</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.005,D:\Works builder\курсач\uMain.h=D:\Works builder\Unit1.h</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.888,D:\Works builder\курсач\LogicBuilder.cbproj=D:\Works builder\LogicBuilder.cbproj</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.005,D:\Works builder\курсач\uMain.dfm=D:\Works builder\Unit1.dfm</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.005,D:\Works builder\курсач\uMain.cpp=D:\Works builder\Unit1.cpp</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.812,D:\Works builder\LogicBuilderPCH1.h=D:\Works builder\Project1PCH1.h</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.541,=C:\Users\User\Downloads\Безымянный-1.ico</Transaction>
     <Transaction>1899.12.30 00:00:00.000.796,C:\Users\User\Downloads\Безымянный-1.ico=</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.816,D:\Works builder\LogicBuilder.cbproj=D:\Works builder\Project1.cbproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.541,=C:\Users\User\Downloads\Безымянный-1.ico</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.005,D:\Works builder\Unit1.h=D:\Works builder\курсач\uMain.h</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.407,D:\Works builder\курсач\Unit1.cpp=D:\Works builder\курсач\uCommon.cpp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.103,=D:\Works builder\курсач\Unit1.cpp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.371,D:\Works builder\LogicBuilderPCH1.h=D:\Works builder\курсач\LogicBuilderPCH1.h</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.005,D:\Works builder\Unit1.dfm=D:\Works builder\курсач\uMain.dfm</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.407,D:\Works builder\курсач\Unit1.h=D:\Works builder\курсач\uCommon.h</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.267,=D:\Works builder\Unit1.cpp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.005,D:\Works builder\Unit1.cpp=D:\Works builder\курсач\uMain.cpp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.328,D:\Works builder\курсач\Unit2.h=D:\Works builder\курсач\uComponent.h</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.940,=D:\Works builder\Project1PCH1.h</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.812,D:\Works builder\Project1PCH1.h=D:\Works builder\LogicBuilderPCH1.h</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.328,D:\Works builder\курсач\Unit2.cpp=D:\Works builder\курсач\uComponent.cpp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.796,=D:\Works builder\курсач\Unit2.cpp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.888,D:\Works builder\LogicBuilder.cbproj=D:\Works builder\курсач\LogicBuilder.cbproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.816,D:\Works builder\Project1.cbproj=D:\Works builder\LogicBuilder.cbproj</Transaction>
+    <Transaction>2019.12.20 21:03:59.788,=D:\Works builder\курсач\Unit1.cpp</Transaction>
+    <Transaction>2019.12.20 21:07:18.807,D:\Works builder\курсач\uWire.cpp=D:\Works builder\курсач\Unit1.cpp</Transaction>
+    <Transaction>2019.12.20 21:07:18.807,D:\Works builder\курсач\uWire.h=D:\Works builder\курсач\Unit1.h</Transaction>
+    <Transaction>2019.12.20 21:11:37.025,=D:\Works builder\курсач\Unit1.cpp</Transaction>
+    <Transaction>2019.12.20 21:14:20.123,D:\Works builder\курсач\uValidation.h=D:\Works builder\курсач\Unit1.h</Transaction>
+    <Transaction>2019.12.20 21:14:20.123,D:\Works builder\курсач\uValidation.cpp=D:\Works builder\курсач\Unit1.cpp</Transaction>
+    <Transaction>2019.12.20 21:26:37.988,=D:\Works builder\курсач\Unit1.cpp</Transaction>
+    <Transaction>2019.12.20 21:28:26.313,D:\Works builder\курсач\uView.cpp=D:\Works builder\курсач\Unit1.cpp</Transaction>
+    <Transaction>2019.12.20 21:28:26.313,D:\Works builder\курсач\uView.h=D:\Works builder\курсач\Unit1.h</Transaction>
   </Transactions>
 </BorlandProject>
