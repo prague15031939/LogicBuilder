@@ -8,6 +8,7 @@
 #include "uWire.h"
 #include "uValidation.h"
 #include "uView.h"
+#include "uModelMode.h"
 #include "uCommon.h"
 
 //---------------------------------------------------------------------------
@@ -16,6 +17,7 @@
 TfrmMain *frmMain;
 
 extern Component component_array[100];
+extern ModelComponent model_component_array[100];
 extern int component_array_pos;
 extern std::string current_component;
 
@@ -33,6 +35,7 @@ extern int comp_width, comp_height, wire_length, grid_width;
 extern int entry_coords[4][4];
 extern int move_step;
 extern bool cursor_mode;
+extern bool model_mode;
 extern bool wire_mode;
 extern bool branch_wire_mode;
 extern int parent_wire;
@@ -96,8 +99,22 @@ void to_svg(std::string dest){
 	char temp_str[300];
 	for (int i = 0; i < component_array_pos; i++) {
 		Component entity = component_array[i];
-		sprintf(temp_str, "<rect fill=\"none\" style=\"stroke:black;stroke-width:1\" x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" />\n", entity.get_x(), entity.get_y(), comp_width, comp_height);
+		if (entity.get_type() == "src"){
+			int temp1 = entity.get_y() + (int) comp_height * 0.3;
+            int temp2 = (int) comp_height * 0.45;
+			sprintf(temp_str, "<rect fill=\"none\" style=\"stroke:black;stroke-width:1\" x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" />\n", entity.get_x(), temp1, comp_width, temp2);
+		}
+		else if (entity.get_type() == "probe"){
+			sprintf(temp_str, "<circle cx=\"%dpx\" cy=\"%dpx\" r=\"%dpx\" fill=\"white\" stroke=\"black\" />", entity.get_x() + (int) comp_width / 2, entity.get_y() + (int) comp_width / 2, (int) comp_width / 2);
+			file_obj << temp_str;
+			sprintf(temp_str, "<path fill=\"none\" stroke=\"black\" d=\"M %d %d L %d %d\" />\n", entity.get_x() + (int) comp_width / 2, entity.get_y() + comp_width, entity.get_x() + (int) comp_width / 2, entity.get_y() + (int) comp_height / 2);
+			file_obj << temp_str;
+			sprintf(temp_str, "<path fill=\"none\" stroke=\"black\" d=\"M %d %d L %d %d\" />\n", entity.get_in_x() + wire_length, entity.get_out_y(), entity.get_out_x() - wire_length, entity.get_out_y());
+		}
+		else
+			sprintf(temp_str, "<rect fill=\"none\" style=\"stroke:black;stroke-width:1\" x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" />\n", entity.get_x(), entity.get_y(), comp_width, comp_height);
 		file_obj << temp_str;
+
 		int in_y[4] = {0, 0, 0, 0};
 		entity.get_in_y(in_y);
 		for (int i = 0; i < entity.get_entry_amount(); i++) {
@@ -118,10 +135,10 @@ void to_svg(std::string dest){
 		}
 		else if (comp_type == "or" || comp_type == "nor") {
 			sprintf(temp_str, "<text x=\"%d\" y=\"%d\" font-size=\"14\" font-family=\"Arial\">%s</text>\n", entity.get_x() + 6, entity.get_y() + 20, "1");
-			}
-			else if (comp_type == "xor" || comp_type == "nxor") {
-				sprintf(temp_str, "<text x=\"%d\" y=\"%d\" font-size=\"13\" font-family=\"Arial\">%s</text>\n", entity.get_x() + 3, entity.get_y() + 20, "=1");
-				}
+		}
+		else if (comp_type == "xor" || comp_type == "nxor") {
+			sprintf(temp_str, "<text x=\"%d\" y=\"%d\" font-size=\"13\" font-family=\"Arial\">%s</text>\n", entity.get_x() + 3, entity.get_y() + 20, "=1");
+		}
 		if (comp_type != "not") {
 			file_obj << temp_str;
 		}
@@ -178,6 +195,24 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 			pbMain -> Invalidate();
 		}
 	}
+
+	else if (model_mode) {
+		for (int i = 0; i < component_array_pos; i++) {
+			if (model_component_array[i].get_type() == "src"){
+				int X0, Y0;
+				X0 = model_component_array[i].get_x();
+				Y0 = model_component_array[i].get_y();
+				if (X >= X0 && X <= X0 + comp_width && Y >= Y0 + (int) comp_height * 0.3 && Y <= Y0 + (int) comp_height * 0.75){
+					int temp = model_component_array[i].get_out_charge();
+					temp = temp ? 0 : 1;
+					model_component_array[i].set_out_charge(temp);
+					break;
+				}
+			}
+		}
+		pbMain -> Invalidate();
+	}
+
 	else if (cursor_mode) {
 		if (selected_comp != -1){
 			pbMain -> Invalidate();
@@ -211,6 +246,7 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 		}
 		pbMain -> Invalidate();
 	}
+
 	else if (wire_mode) {
 
 		switch (wire_stage) {
@@ -275,9 +311,12 @@ void __fastcall TfrmMain::pbMainPaint(TObject *Sender)
 {
 	if (to_draw_grid)
 		draw_grid(pbMain);
-	for (int i = 0; i < component_array_pos; i++) {
-		draw_component(pbMain, component_array[i]);
-	}
+	if (!model_mode)
+		for (int i = 0; i < component_array_pos; i++)
+			draw_component(pbMain, component_array[i]);
+	else
+		for (int i = 0; i < component_array_pos; i++)
+			draw_model_component(pbMain, i);
 	if (selected_comp != -1) {
 		draw_highlight(pbMain, selected_comp);
 	}
@@ -300,7 +339,7 @@ void __fastcall TfrmMain::FormCreate(TObject *Sender)
 {
 	Save1 -> Enabled = false;
 	Saveas1 -> Enabled = false;
-	OpenDialog -> Filter = "LogicBuilder filse(.lb)|*.lb|";
+	OpenDialog -> Filter = "LogicBuilder files(.lb)|*.lb|";
 	move_step = 2 * grid_width;
 	frmMain -> DoubleBuffered = true;
 	pbMain -> Invalidate();
@@ -309,11 +348,13 @@ void __fastcall TfrmMain::FormCreate(TObject *Sender)
 
 void __fastcall TfrmMain::lboxComponentsDblClick(TObject *Sender)
 {
-	current_component = AnsiString(lboxComponents -> Items -> Strings[lboxComponents -> ItemIndex]).c_str();
-	cursor_mode = false;
-	selected_comp = -1;
-    selected_wire = -1;
-	pbMain -> Invalidate();
+	if (!model_mode) {
+        current_component = AnsiString(lboxComponents -> Items -> Strings[lboxComponents -> ItemIndex]).c_str();
+		cursor_mode = false;
+		selected_comp = -1;
+		selected_wire = -1;
+		pbMain -> Invalidate();
+	}
 }
 //---------------------------------------------------------------------------
 
@@ -391,7 +432,7 @@ void __fastcall TfrmMain::actDeleteComponentExecute(TObject *Sender)
 {
 	if (selected_comp != -1) {
 		delete_component(selected_comp);
-        frmMain -> Saveas1 -> Enabled = true;
+		frmMain -> Saveas1 -> Enabled = true;
 		selected_comp = -1;
 	}
 	if (selected_wire != -1) {
@@ -555,7 +596,7 @@ void __fastcall TfrmMain::actNewFileExecute(TObject *Sender)
 void __fastcall TfrmMain::actBranchWireExecute(TObject *Sender)
 {
 	wire_mode = true;
-    branch_wire_mode = true;
+	branch_wire_mode = true;
 	wire_stage = wsBegin;
 	cursor_mode = false;
 	current_component = "";
@@ -565,6 +606,25 @@ void __fastcall TfrmMain::actBranchWireExecute(TObject *Sender)
 void __fastcall TfrmMain::actDrawGridExecute(TObject *Sender)
 {
 	to_draw_grid = to_draw_grid ? false : true;
+	pbMain -> Invalidate();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::actSetModelModeExecute(TObject *Sender)
+{
+	model_mode = model_mode ? false : true;
+	cursor_mode = model_mode ? false : true;
+	wire_mode = false;
+	branch_wire_mode = false;
+	current_component = "";
+	selected_comp = -1;
+	selected_wire = -1;
+	move_line_buffer_pos = 0;
+
+	if (model_mode)
+		init_model_array();
+
+	pbMain -> Invalidate();
 }
 //---------------------------------------------------------------------------
 

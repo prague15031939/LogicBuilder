@@ -113,6 +113,10 @@ object frmMain: TfrmMain
         Action = actTakeCursor
         Caption = 'Cursor mode'
       end
+      object actSetModelMode1: TMenuItem
+        Action = actSetModelMode
+        Caption = 'Model mode'
+      end
       object N1: TMenuItem
         Caption = '-'
       end
@@ -254,6 +258,12 @@ object frmMain: TfrmMain
       Caption = 'actDrawGrid'
       ShortCut = 71
       OnExecute = actDrawGridExecute
+    end
+    object actSetModelMode: TAction
+      Category = 'Control'
+      Caption = 'actSetModelMode'
+      ShortCut = 86
+      OnExecute = actSetModelModeExecute
     end
   end
   object SaveDialog: TSaveDialog

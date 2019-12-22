@@ -7,6 +7,7 @@
 #include "uCommon.h"
 
 void draw_component(TPaintBox *pb, Component entity);
+void draw_model_component(TPaintBox *pb, int index);
 void draw_entries(TPaintBox *pb, Component entity);
 void draw_wire(TPaintBox *pb, Wire entity);
 void draw_temp_lines(TPaintBox *pb);

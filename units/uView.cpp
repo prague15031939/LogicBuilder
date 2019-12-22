@@ -9,6 +9,7 @@
 #pragma package(smart_init)
 
 extern Component component_array[100];
+extern ModelComponent model_component_array[100];
 extern int component_array_pos;
 extern std::string current_component;
 
@@ -26,6 +27,7 @@ extern int comp_width, comp_height, wire_length, grid_width;
 extern int entry_coords[4][4];
 extern int move_step;
 extern bool cursor_mode;
+extern bool model_mode;
 extern bool wire_mode;
 extern bool branch_wire_mode;
 extern int parent_wire;
@@ -43,7 +45,8 @@ void draw_component(TPaintBox *pb, Component entity){
 	X = entity.get_x();
 	Y = entity.get_y();
 	std::string comp_type = entity.get_type();
-    pb -> Font -> Size = 8;
+	pb -> Canvas -> Font -> Size = 8;
+	pb -> Canvas -> Brush -> Color = clWhite;
 
 	if (!(comp_type == "src" || comp_type == "probe")) {
 		pb -> Canvas -> Rectangle(X, Y, X + comp_width, Y + comp_height);
@@ -68,21 +71,70 @@ void draw_component(TPaintBox *pb, Component entity){
 
 	else if (comp_type == "src") {
 		pb -> Canvas -> Rectangle(X, Y + (int) comp_height * 0.3, X + comp_width, Y + (int) comp_height * 0.75);
-		//pb -> Canvas -> Brush -> Color = clRed;
 		pb -> Canvas -> FillRect(Rect(X + 1, Y + (int) comp_height * 0.3 + 1, X + comp_width - 1, Y + (int) comp_height * 0.75 - 1));
-		pb -> Canvas -> Brush -> Color = clWhite;
-		draw_entries(pb, entity);
 		pb -> Canvas -> MoveTo(X + comp_width, entity.get_out_y());
 		pb -> Canvas -> LineTo(entity.get_out_x(), entity.get_out_y());
 	}
 	else{
-		//pb -> Canvas -> Brush -> Color = clRed;
 		pb -> Canvas -> Ellipse(X, Y, X + comp_width, Y + comp_width);
-        pb -> Canvas -> Brush -> Color = clWhite;
 		pb -> Canvas -> MoveTo(X + (int) comp_width / 2, Y + comp_width);
 		pb -> Canvas -> LineTo(X + (int) comp_width / 2, Y + (int) comp_height / 2);
 		pb -> Canvas -> MoveTo(entity.get_in_x(), entity.get_out_y());
 		pb -> Canvas -> LineTo(entity.get_out_x(), entity.get_out_y());
+	}
+}
+
+void draw_model_component(TPaintBox *pb, int index){
+	draw_component(pb, component_array[index]);
+	ModelComponent entity = model_component_array[index];
+
+	int X, Y;
+	X = entity.get_x();
+	Y = entity.get_y();
+	if (entity.get_type() == "src") {
+		pb -> Canvas -> Font -> Size = 10;
+		if (entity.get_out_charge() == 0)
+			pb -> Canvas -> TextOut(X + 5, Y + 15, "0");
+		else if (entity.get_out_charge() == 1)
+				pb -> Canvas -> TextOut(X + 5, Y + 15, "1");
+		pb -> Canvas -> Font -> Size = 8;
+	}
+	else if (entity.get_type() == "probe") {
+			int in_charges[4];
+			entity.get_in_charges(in_charges);
+			if (in_charges[0] == 1){
+				pb -> Canvas -> Brush -> Color = clRed;
+				pb -> Canvas -> FloodFill(X + 10, Y + 10, clBlack, fsBorder);
+			}
+			else if (in_charges[0] == 0)
+				pb -> Canvas -> FloodFill(X + 10, Y + 10, clBlack, fsBorder);
+			pb -> Canvas -> Brush -> Color = clWhite;
+	}
+
+	else{
+		int out_charge, in_charges[4], in_x, in_y[4], out_x, out_y;
+		entity.get_in_charges(in_charges);
+		out_charge = entity.get_out_charge();
+		entity.get_in_y(in_y);
+		in_x = entity.get_in_x();
+		out_x = entity.get_out_x();
+        out_y = entity.get_out_y();
+
+		for (int i = 0; i < entity.get_entry_amount(); i++) {
+			if (in_charges[i] != -1) {
+				if (in_charges[i] == 1)
+					pb -> Canvas -> Brush -> Color = clRed;
+				pb -> Canvas -> Rectangle(in_x + 4, in_y[i] - 7, in_x + 9, in_y[i] - 2);
+				pb -> Canvas -> Brush -> Color = clWhite;
+			}
+		}
+
+		if (out_charge != -1) {
+			if (out_charge == 1)
+				pb -> Canvas -> Brush -> Color = clRed;
+			pb -> Canvas -> Rectangle(out_x - 8, out_y - 7, out_x - 3, out_y - 2);
+			pb -> Canvas -> Brush -> Color = clWhite;
+		}
 	}
 }
 

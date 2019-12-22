@@ -147,6 +147,10 @@
             <DependentOn>units\uComponent.h</DependentOn>
             <BuildOrder>4</BuildOrder>
         </CppCompile>
+        <CppCompile Include="units\uModelMode.cpp">
+            <DependentOn>units\uModelMode.h</DependentOn>
+            <BuildOrder>8</BuildOrder>
+        </CppCompile>
         <CppCompile Include="units\uValidation.cpp">
             <DependentOn>units\uValidation.h</DependentOn>
             <BuildOrder>5</BuildOrder>

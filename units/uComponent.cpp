@@ -8,6 +8,7 @@
 #include "uCommon.h"
 
 extern Component component_array[100];
+extern ModelComponent model_component_array[100];
 extern int component_array_pos;
 extern std::string current_component;
 
@@ -25,6 +26,7 @@ extern int comp_width, comp_height, wire_length, grid_width;
 extern int entry_coords[4][4];
 extern int move_step;
 extern bool cursor_mode;
+extern bool model_mode;
 extern bool wire_mode;
 extern bool branch_wire_mode;
 extern int parent_wire;

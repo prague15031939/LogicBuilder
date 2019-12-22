@@ -70,6 +70,8 @@ __published:	// IDE-managed Components
 	TMenuItem *N2;
 	TAction *actDrawGrid;
 	TMenuItem *actDrawGrid1;
+	TAction *actSetModelMode;
+	TMenuItem *actSetModelMode1;
 	void __fastcall pbMainPaint(TObject *Sender);
 	void __fastcall FormCreate(TObject *Sender);
 	void __fastcall lboxComponentsDblClick(TObject *Sender);
@@ -93,6 +95,7 @@ __published:	// IDE-managed Components
 	void __fastcall actSVGExportExecute(TObject *Sender);
 	void __fastcall actBranchWireExecute(TObject *Sender);
 	void __fastcall actDrawGridExecute(TObject *Sender);
+	void __fastcall actSetModelModeExecute(TObject *Sender);
 
 private:	// User declarations
 public:		// User declarations

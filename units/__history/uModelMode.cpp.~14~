@@ -1,0 +1,76 @@
+//---------------------------------------------------------------------------
+
+#pragma hdrstop
+#pragma package(smart_init)
+
+#include "uModelMode.h"
+#include "uCommon.h"
+//---------------------------------------------------------------------------
+
+extern Component component_array[100];
+extern ModelComponent model_component_array[100];
+extern int component_array_pos;
+extern std::string current_component;
+
+extern Wire wire_array[300];
+extern int wire_array_pos;
+extern int current_wire[10][4];
+extern int current_wire_pos;
+typedef enum {wsBegin, wsMiddle, wsEnd} TWireStage;
+extern TWireStage wire_stage;
+
+extern int x_dot_highlight;
+extern int y_dot_highlight;
+
+extern int comp_width, comp_height, wire_length, grid_width;
+extern int entry_coords[4][4];
+extern int move_step;
+extern bool cursor_mode;
+extern bool model_mode;
+extern bool wire_mode;
+extern bool branch_wire_mode;
+extern int parent_wire;
+extern int move_line_buffer[10][4];
+extern int move_line_buffer_pos;
+extern int selected_comp;
+extern int selected_wire;
+
+extern std::string file_dir;
+
+void init_model_array(){
+
+	for (int i = 0; i < component_array_pos; i++) {
+		Component basis = component_array[i];
+		ModelComponent super;
+
+		super.set_type(basis.get_type());
+		super.set_entry_amount(basis.get_entry_amount());
+		super.set_coords(basis.get_x(), basis.get_y());
+		super.set_out_x(basis.get_out_x());
+		super.set_out_y(basis.get_out_y());
+		super.set_in_x(basis.get_in_x());
+		super.set_out_wire(basis.get_out_wire());
+
+		int in_y[4];
+		basis.get_in_y(in_y);
+		super.set_in_y(in_y);
+		int in_wires[4];
+		basis.get_in_wires(in_wires);
+		for (int j = 0; j < 4; j++)
+			super.set_in_wire(in_wires[j], j);
+
+		if (super.get_type() == "src")
+			super.set_out_charge(1);
+		else
+			//super.set_out_charge(-1);
+            super.set_out_charge(1);
+		super.set_in_charge(1, 0);
+		super.set_in_charge(-1, 1);
+		super.set_in_charge(1, 2);
+		super.set_in_charge(0, 3);
+//		for (int j = 0; j < 4; j++)
+  //			super.set_in_charge(-1, j);
+
+        model_component_array[i] = super;
+	}
+}

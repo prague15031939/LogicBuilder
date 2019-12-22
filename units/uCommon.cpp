@@ -4,6 +4,7 @@
 #include "uCommon.h"
 
 Component component_array[100];
+ModelComponent model_component_array[100];
 int component_array_pos = 0;
 std::string current_component = "";
 
@@ -23,6 +24,7 @@ int y_dot_highlight = -1;
 
 int move_step;
 bool cursor_mode = true;
+bool model_mode = false;
 bool wire_mode = false;
 bool branch_wire_mode = false;
 int parent_wire = -1;

@@ -87,6 +87,28 @@ private:
 	int out_wire;
 };
 
+class ModelComponent : public Component {
+public:
+	void set_in_charge(int value, int index){
+		this->in_charge[index] = value;
+	}
+	void get_in_charges(int arr[4]){
+		for (int i = 0; i < 4; i++) {
+			arr[i] = this->in_charge[i];
+		}
+	}
+	void set_out_charge(int value){
+		this->out_charge = value;
+	}
+	int get_out_charge(){
+		return this->out_charge;
+	}
+
+private:
+	int in_charge[4];
+	int out_charge;
+};
+
 class Wire {
 public:
 	void set_lines(arr[10][4]){
