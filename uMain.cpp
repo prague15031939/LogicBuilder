@@ -210,6 +210,8 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 				}
 			}
 		}
+		reset_charges();
+        model_scheme();
 		pbMain -> Invalidate();
 	}
 
@@ -621,8 +623,10 @@ void __fastcall TfrmMain::actSetModelModeExecute(TObject *Sender)
 	selected_wire = -1;
 	move_line_buffer_pos = 0;
 
-	if (model_mode)
+	if (model_mode){
 		init_model_array();
+		model_scheme();
+	}
 
 	pbMain -> Invalidate();
 }

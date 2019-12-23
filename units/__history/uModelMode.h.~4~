@@ -1,0 +1,12 @@
+//---------------------------------------------------------------------------
+
+#ifndef uModelModeH
+#define uModelModeH
+
+#include "uCommon.h"
+
+void init_model_array(void);
+void model_scheme(void);
+
+//---------------------------------------------------------------------------
+#endif
