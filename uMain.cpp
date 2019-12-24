@@ -89,6 +89,7 @@ void save_to_file(std::string dest){
 }
 
 void to_svg(std::string dest){
+
 	ofstream file_obj;
 	file_obj.open(dest.c_str(), ios::out | ios::trunc);
 
@@ -211,7 +212,11 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 			}
 		}
 		reset_charges();
-        model_scheme();
+		if (model_scheme() == 1){
+			cursor_mode = true;
+			model_mode = false;
+			Application -> MessageBox(L"Undefined behaviour", L"LogicBuilder", MB_OK | MB_ICONERROR);
+		}
 		pbMain -> Invalidate();
 	}
 
@@ -267,6 +272,10 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 
 			case wsMiddle:
 				correct_with_angle(&X, &Y);
+				if (current_wire_pos == 9){
+					wire_stage = wsEnd;
+					break;
+				}
 				if (valid_wire_middle(&X, &Y)) {
 					current_wire[current_wire_pos][2] = X;
 					current_wire[current_wire_pos][3] = Y;
@@ -619,13 +628,16 @@ void __fastcall TfrmMain::actSetModelModeExecute(TObject *Sender)
 	wire_mode = false;
 	branch_wire_mode = false;
 	current_component = "";
-	selected_comp = -1;
-	selected_wire = -1;
 	move_line_buffer_pos = 0;
 
 	if (model_mode){
 		init_model_array();
-		model_scheme();
+		if (model_scheme() == 1){
+			cursor_mode = true;
+            model_mode = false;
+			Application -> MessageBox(L"Undefined behaviour", L"LogicBuilder", MB_OK | MB_ICONERROR);
+		}
+
 	}
 
 	pbMain -> Invalidate();

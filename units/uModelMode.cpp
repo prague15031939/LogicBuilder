@@ -40,6 +40,8 @@ extern int selected_wire;
 
 extern std::string file_dir;
 
+int check_array[100];
+
 void init_model_array(void){
 
 	for (int i = 0; i < component_array_pos; i++) {
@@ -152,7 +154,31 @@ void break_in_wires_in_connected_components(int base_wire){
 	}
 }
 
-void model_scheme(void){
+int is_cycle_exist(int out_wire){
+
+	if (out_wire == -1)
+		return -1;
+
+	check_array[wire_array[out_wire].get_in_component()] = true;
+
+	int connected_wires[5];
+	wire_array[out_wire].get_connected_wires(connected_wires);
+	for (int i = 0; i < wire_array[out_wire].get_connected_wires_amount(); i++)
+		return is_cycle_exist(connected_wires[i]);
+
+	int out_component = wire_array[out_wire].get_out_component();
+	if (out_component != -1) {
+		if (check_array[out_component])
+			return out_wire;
+		else
+			return is_cycle_exist(component_array[out_component].get_out_wire());
+	}
+	else
+		return -1;
+
+}
+
+int model_scheme(void){
 
 	bool components_checked[100];
 	for (int i = 0; i < component_array_pos; i++)
@@ -162,6 +188,14 @@ void model_scheme(void){
 
 		for (int i = 0; i < component_array_pos; i++) {
 			if (!components_checked[i]) {
+
+				for (int j = 0 ; j < component_array_pos; j++)
+					check_array[j] = false;
+				int cycle_wire = is_cycle_exist(model_component_array[i].get_out_wire());
+				if (cycle_wire != -1){
+					selected_wire = cycle_wire;
+					return 1;
+				}
 
 				if (is_trash_component(model_component_array[i]) && model_component_array[i].get_type() != "src") {
 					components_checked[i] = true;
@@ -224,7 +258,7 @@ void model_scheme(void){
 		}
 
 		if (not_checked == 0)
-			return;
+			return 0;
 
 	}
 

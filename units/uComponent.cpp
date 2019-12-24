@@ -38,6 +38,9 @@ extern int selected_wire;
 extern std::string file_dir;
 
 void add_component(int X, int Y){
+	if (component_array_pos == 100)
+		return;
+
 	Component entity;
 	if (!(current_component == "not" || current_component == "src" || current_component == "probe")) {
 		entity.set_type(fetch_component_name(current_component));

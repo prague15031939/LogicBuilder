@@ -40,6 +40,9 @@ extern std::string file_dir;
 
 
 void add_wire(int item[10][4]){
+	if (wire_array_pos == 300)
+		return;
+
 	int start;
 	int end[2] = {-1, -1};
 	if (!branch_wire_mode)
@@ -47,6 +50,8 @@ void add_wire(int item[10][4]){
 	else {
 		start = wire_array[parent_wire].get_in_component();
 		int temp = wire_array[parent_wire].get_connected_wires_amount();
+		if (temp == 5)
+			return;
 		wire_array[parent_wire].set_connected_wire(wire_array_pos, temp++);
 		wire_array[parent_wire].set_connected_wires_amount(temp);
 	}
