@@ -187,7 +187,7 @@ void logger(){
 void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, TShiftState Shift,
 		  int X, int Y)
 {
-	if (!(current_component == "")) {
+	if (current_component != "") {
 		round_coords(&X, &Y);
 		if (valid_place(X, Y, -1)) {
 			add_component(X, Y);

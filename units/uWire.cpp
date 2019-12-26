@@ -9,7 +9,6 @@
 #include "uCommon.h"
 
 extern Component component_array[100];
-extern ModelComponent model_component_array[100];
 extern int component_array_pos;
 extern std::string current_component;
 
@@ -17,26 +16,10 @@ extern Wire wire_array[300];
 extern int wire_array_pos;
 extern int current_wire[10][4];
 extern int current_wire_pos;
-typedef enum {wsBegin, wsMiddle, wsEnd} TWireStage;
-extern TWireStage wire_stage;
-
-extern int x_dot_highlight;
-extern int y_dot_highlight;
 
 extern int comp_width, comp_height, wire_length, grid_width;
-extern int entry_coords[4][4];
-extern int move_step;
-extern bool cursor_mode;
-extern bool model_mode;
-extern bool wire_mode;
 extern bool branch_wire_mode;
 extern int parent_wire;
-extern int move_line_buffer[10][4];
-extern int move_line_buffer_pos;
-extern int selected_comp;
-extern int selected_wire;
-
-extern std::string file_dir;
 
 
 void add_wire(int item[10][4]){
