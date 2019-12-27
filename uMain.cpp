@@ -644,3 +644,9 @@ void __fastcall TfrmMain::actSetModelModeExecute(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
+void __fastcall TfrmMain::Help1Click(TObject *Sender)
+{
+	frmHelp -> Show();
+}
+//---------------------------------------------------------------------------
+

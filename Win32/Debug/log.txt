@@ -1,117 +1,38 @@
 component #0:
-src 0
+and 2
+in wires: -1 -1 -1 -1
+out wire: 2
+
+component #1:
+nor 2
+in wires: 1 2 -1 -1
+out wire: -1
+
+component #2:
+nor 3
+in wires: -1 0 -1 -1
+out wire: 1
+
+component #3:
+xor 3
 in wires: -1 -1 -1 -1
 out wire: 0
 
-component #1:
-and 3
-in wires: 8 0 1 -1
-out wire: 2
-
-component #2:
-nor 4
-in wires: 9 -1 2 3
-out wire: 4
-
-component #3:
-probe 1
-in wires: 4 -1 -1 -1
-out wire: -1
-
-component #4:
-src 0
-in wires: -1 -1 -1 -1
-out wire: 1
-
-component #5:
-not 1
-in wires: 5 -1 -1 -1
-out wire: 6
-
-component #6:
-src 0
-in wires: -1 -1 -1 -1
-out wire: 5
-
-component #7:
-nxor 3
-in wires: 6 11 7 -1
-out wire: 8
-
-component #8:
-not 1
-in wires: 10 -1 -1 -1
-out wire: 11
-
 wire #0:
-in_component: 0
-out_component: 1, entry: 1
-connected wires: 7 10 -1 -1 -1
+in_component: 3
+out_component: 2, entry: 1
+connected wires: -1 -1 -1 -1 -1
 parent wire: -1
 
 wire #1:
-in_component: 4
-out_component: 1, entry: 2
-connected wires: 3 -1 -1 -1 -1
+in_component: 2
+out_component: 1, entry: 0
+connected wires: -1 -1 -1 -1 -1
 parent wire: -1
 
 wire #2:
-in_component: 1
-out_component: 2, entry: 2
-connected wires: -1 -1 -1 -1 -1
-parent wire: -1
-
-wire #3:
-in_component: 4
-out_component: 2, entry: 3
-connected wires: -1 -1 -1 -1 -1
-parent wire: 1
-
-wire #4:
-in_component: 2
-out_component: 3, entry: 0
-connected wires: -1 -1 -1 -1 -1
-parent wire: -1
-
-wire #5:
-in_component: 6
-out_component: 5, entry: 0
-connected wires: -1 -1 -1 -1 -1
-parent wire: -1
-
-wire #6:
-in_component: 5
-out_component: 7, entry: 0
-connected wires: -1 -1 -1 -1 -1
-parent wire: -1
-
-wire #7:
 in_component: 0
-out_component: 7, entry: 2
-connected wires: -1 -1 -1 -1 -1
-parent wire: 0
-
-wire #8:
-in_component: 7
-out_component: 1, entry: 0
-connected wires: 9 -1 -1 -1 -1
-parent wire: -1
-
-wire #9:
-in_component: 7
-out_component: 2, entry: 0
-connected wires: -1 -1 -1 -1 -1
-parent wire: 8
-
-wire #10:
-in_component: 0
-out_component: 8, entry: 0
-connected wires: -1 -1 -1 -1 -1
-parent wire: 0
-
-wire #11:
-in_component: 8
-out_component: 7, entry: 1
+out_component: 1, entry: 1
 connected wires: -1 -1 -1 -1 -1
 parent wire: -1
 

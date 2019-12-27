@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <fstream.h>
+#include "uHelp.h"
 //---------------------------------------------------------------------------
 using namespace std;
 
@@ -96,6 +97,7 @@ __published:	// IDE-managed Components
 	void __fastcall actBranchWireExecute(TObject *Sender);
 	void __fastcall actDrawGridExecute(TObject *Sender);
 	void __fastcall actSetModelModeExecute(TObject *Sender);
+	void __fastcall Help1Click(TObject *Sender);
 
 private:	// User declarations
 public:		// User declarations

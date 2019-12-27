@@ -1,0 +1,33 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include <windows.h>
+#include <string>
+#include "uHelp.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+TfrmHelp *frmHelp;
+
+using namespace std;
+//---------------------------------------------------------------------------
+__fastcall TfrmHelp::TfrmHelp(TComponent* Owner)
+	: TForm(Owner)
+{
+}
+//---------------------------------------------------------------------------
+
+std::string ExePath() {
+	char buffer[100];
+	GetModuleFileName(NULL, buffer, 100);
+	string::size_type pos = string(buffer).find_last_of( "\\/" );
+	return string(buffer).substr( 0, pos);
+}
+
+void __fastcall TfrmHelp::FormCreate(TObject *Sender)
+{
+	wbrHelp -> Navigate(ExePath() + "help.html");
+}
+//---------------------------------------------------------------------------

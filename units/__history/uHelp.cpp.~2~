@@ -1,0 +1,50 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "uHelp.h"
+#include <stdio.h>  /* defines FILENAME_MAX */
+#define WINDOWS  /* uncomment this line to use it for windows.*/
+#ifdef WINDOWS
+#include <direct.h>
+#define GetCurrentDir _getcwd
+#else
+#include <unistd.h>
+#define GetCurrentDir getcwd
+#endif
+#include <wchar.h>
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+TfrmHelp *frmHelp;
+
+using namespace std;
+//---------------------------------------------------------------------------
+__fastcall TfrmHelp::TfrmHelp(TComponent* Owner)
+	: TForm(Owner)
+{
+}
+//---------------------------------------------------------------------------
+
+wchar_t *GetWC(const char *c)
+{
+	const size_t cSize = strlen(c)+1;
+	wchar_t* wc = new wchar_t[cSize];
+	mbstowcs (wc, c, cSize);
+
+	return wc;
+}
+
+wchar_t* GetCurrentWorkingDir(void) {
+  char buff[100];
+  GetCurrentDir(buff, 100);
+  wchar_t* current_working_dir(GetWC(buff));
+  return current_working_dir;
+}
+
+void __fastcall TfrmHelp::FormCreate(TObject *Sender)
+{
+	wbrHelp -> Navigate(wcscat(GetCurrentWorkingDir(), L"help.html"));
+}
+//---------------------------------------------------------------------------

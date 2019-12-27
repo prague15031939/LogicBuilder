@@ -150,6 +150,7 @@ object frmMain: TfrmMain
     end
     object Help1: TMenuItem
       Caption = 'Help'
+      OnClick = Help1Click
     end
   end
   object actlistMain: TActionList

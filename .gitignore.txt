@@ -2,8 +2,8 @@
 *.res
 *.rc
 
-units/__history/
-units/__recovery/
+__history/
+__recovery/
 
 *.#00
 *.ilc
