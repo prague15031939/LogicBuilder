@@ -118,22 +118,38 @@ public:
 			}
 		}
 	}
-	void set_first_coords(int x, int y){
-		this->lines[0][0] = x;
-		this->lines[0][1] = y;
+	void set_first_line(int x1, int y1, int x2, int y2){
+		this->lines[0][0] = x1;
+		this->lines[0][1] = y1;
+		this->lines[0][2] = x2;
+		this->lines[0][3] = y2;
+		this->lines[1][0] = x2;
+		this->lines[1][1] = y2;
 	}
-	void set_last_coords(int x, int y){
-		this->lines[this->get_lines_amount() - 1][2] = x;
-		this->lines[this->get_lines_amount() - 1][3] = y;
+	void set_last_line(int x1, int y1, int x2, int y2){
+		this->lines[this->get_lines_amount() - 2][2] = x1;
+		this->lines[this->get_lines_amount() - 2][3] = y1;
+		this->lines[this->get_lines_amount() - 1][0] = x1;
+		this->lines[this->get_lines_amount() - 1][1] = y1;
+		this->lines[this->get_lines_amount() - 1][2] = x2;
+		this->lines[this->get_lines_amount() - 1][3] = y2;
 	}
-	void get_first_line(int *x1, int *y1, int *x2, int *y2){
+	void get_first_line(int *x1, int *y1, int *x2, int *y2, int *x0, int *y0){
 		*x1 = this->lines[0][0];
 		*y1 = this->lines[0][1];
 		*x2 = this->lines[0][2];
 		*y2 = this->lines[0][3];
+		if (this->get_lines_amount() > 1) {
+			*x0 = this->lines[1][2];
+			*y0 = this->lines[1][3];
+		}
 	}
-	void get_last_line(int *x1, int *y1, int *x2, int *y2){
+	void get_last_line(int *x0, int *y0, int *x1, int *y1, int *x2, int *y2){
 		int last = this->get_lines_amount();
+		if (last > 1) {
+			*x0 = this->lines[last - 2][0];
+			*y0 = this->lines[last - 2][1];
+		}
 		*x1 = this->lines[last - 1][0];
 		*y1 = this->lines[last - 1][1];
 		*x2 = this->lines[last - 1][2];

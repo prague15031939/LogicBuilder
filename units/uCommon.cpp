@@ -23,6 +23,7 @@ int x_dot_highlight = -1;
 int y_dot_highlight = -1;
 
 int move_step;
+int x_start_move, y_start_move;
 bool cursor_mode = true;
 bool model_mode = false;
 bool wire_mode = false;

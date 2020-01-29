@@ -18,6 +18,7 @@ extern int current_wire_pos;
 
 extern int comp_width, comp_height, wire_length, grid_width;
 extern int entry_coords[4][4];
+extern int selected_comp;
 
 void add_component(int X, int Y){
 	if (component_array_pos == 100)
@@ -93,11 +94,8 @@ Component modify_component_position(Component entity, int new_x, int new_y){
 			if (!valid_local_line_is_alone(in_wires[i], 0))
 				return entity;
 
-	for (int i = 0; i < num; i++)
-		if (in_wires[i] != -1)
-			wire_array[in_wires[i]].set_last_coords(new_x - wire_length, new_y + entry_coords[num - 1][i]);
-	if (out_wire != -1)
-		wire_array[out_wire].set_first_coords(new_x + comp_width + wire_length, new_y + (int)comp_height / 2);
+	if (!pull_connected_wires(entity, new_x, new_y))
+		return entity;
 
 	entity.set_coords(new_x, new_y);
 	entity.set_out_x(new_x + comp_width + wire_length);
@@ -171,25 +169,75 @@ void find_end_component(int end[2], int x0, int y0){
 }
 
 void round_coords(int* X, int* Y){
-	while (!(*X % grid_width == 0))
-		(*X)--;
-	while (!(*Y % grid_width == 0))
-		(*Y)--;
-	if (!valid_place(*X, *Y, -1)) {
-		(*X) += grid_width;
+
+	int temp_x = *X, temp_y = *Y;
+	int dist_arr[4][2];
+
+	for (int i = 0; i < 4; i++)
+		dist_arr[i][0] = dist_arr[i][1] = -1;
+
+	if (!(*X % grid_width == 0)) {
+		while (!(temp_x % grid_width == 0))
+			temp_x--;
 	}
-	else
-		return;
-	if (!valid_place(*X, *Y, -1)) {
-		(*X) += grid_width;
+	if (!(*Y % grid_width == 0)) {
+		while (!(temp_y % grid_width == 0))
+			temp_y--;
 	}
-	else
-		return;
-	if (!valid_place(*X, *Y, -1)) {
-		(*Y) += 2 * grid_width;
+
+	if (valid_place(temp_x, temp_y, selected_comp)){
+		dist_arr[0][0] = temp_x;
+		dist_arr[0][1] = temp_y;
 	}
-	else
-		return;
+
+	if (!(*X % grid_width == 0)) {
+		temp_x++;
+		while (!(temp_x % grid_width == 0))
+			temp_x++;
+	}
+
+	if (valid_place(temp_x, temp_y, selected_comp)){
+		dist_arr[1][0] = temp_x;
+		dist_arr[1][1] = temp_y;
+	}
+
+	if (!(*Y % grid_width == 0)) {
+		temp_y++;
+		while (!(temp_y % grid_width == 0))
+			temp_y++;
+	}
+
+	if (valid_place(temp_x, temp_y, selected_comp)){
+		dist_arr[2][0] = temp_x;
+		dist_arr[2][1] = temp_y;
+	}
+
+	if (!(*X % grid_width == 0)) {
+		temp_x--;
+		while (!(temp_x % grid_width == 0))
+			temp_x--;
+	}
+
+	if (valid_place(temp_x, temp_y, selected_comp)){
+		dist_arr[3][0] = temp_x;
+		dist_arr[3][1] = temp_y;
+	}
+
+	double min_dist = 2 * grid_width;
+	int res = -1;
+	for (int i = 0; i < 4; i++)
+		if (dist_arr[i][0] != -1 && dist_arr[i][1] != -1) {
+			double temp_dist = sqrt(pow((double)*X - dist_arr[i][0], 2) + pow((double)*Y - dist_arr[i][1], 2));
+			if (temp_dist < min_dist) {
+				min_dist = temp_dist;
+				res = i;
+			}
+		}
+
+	if (res != -1) {
+		*X = dist_arr[res][0];
+		*Y = dist_arr[res][1];
+	}
 }
 
 

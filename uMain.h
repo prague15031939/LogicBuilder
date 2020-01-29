@@ -66,7 +66,6 @@ __published:	// IDE-managed Components
 	TMenuItem *btnBranchWire;
 	TMenuItem *btnEndWire;
 	TMenuItem *actDeleteComponent1;
-	TMenuItem *actCheangeMoveStep1;
 	TMenuItem *N1;
 	TMenuItem *N2;
 	TAction *actDrawGrid;
@@ -84,7 +83,6 @@ __published:	// IDE-managed Components
 	void __fastcall actMoveLeftExecute(TObject *Sender);
 	void __fastcall actMoveRightExecute(TObject *Sender);
 	void __fastcall actDeleteComponentExecute(TObject *Sender);
-	void __fastcall actCheangeMoveStepExecute(TObject *Sender);
 	void __fastcall actSaveFileExecute(TObject *Sender);
 	void __fastcall actOpenFileExecute(TObject *Sender);
 	void __fastcall actSaveFileAsExecute(TObject *Sender);
@@ -98,6 +96,8 @@ __published:	// IDE-managed Components
 	void __fastcall actDrawGridExecute(TObject *Sender);
 	void __fastcall actSetModelModeExecute(TObject *Sender);
 	void __fastcall Help1Click(TObject *Sender);
+	void __fastcall pbMainMouseUp(TObject *Sender, TMouseButton Button, TShiftState Shift,
+          int X, int Y);
 
 private:	// User declarations
 public:		// User declarations

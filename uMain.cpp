@@ -34,6 +34,7 @@ extern int y_dot_highlight;
 extern int comp_width, comp_height, wire_length, grid_width;
 extern int entry_coords[4][4];
 extern int move_step;
+extern int x_start_move, y_start_move;
 extern bool cursor_mode;
 extern bool model_mode;
 extern bool wire_mode;
@@ -166,6 +167,7 @@ void logger(){
 	for (int i = 0; i < component_array_pos; i++) {
 		file_obj << "component #" << i << ":\n";
 		file_obj << component_array[i].get_type() << " " << component_array[i].get_entry_amount() << "\n";
+        file_obj << "x_coord: " << component_array[i].get_x() << ", y_coord: " << component_array[i].get_y() << "\n";
 		int in_wires[4];
 		component_array[i].get_in_wires(in_wires);
 		file_obj << "in wires: " << in_wires[0] << " " << in_wires[1] << " "  << in_wires[2] << " "  << in_wires[3] << "\n";
@@ -235,6 +237,10 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 			Y0 = component_array[i].get_y();
 			if (X >= X0 && X <= X0 + comp_width && Y >= Y0 && Y <= Y0 + comp_height) {
 				selected_comp = i;
+				if (Shift.Contains(ssLeft)) {
+					x_start_move = X;
+					y_start_move = Y;
+				}
 				break;
 			}
 		}
@@ -293,19 +299,10 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 
 			case wsEnd:
 				if (valid_wire_end(&X, &Y)) {
-					if (move_line_buffer[move_line_buffer_pos][1] == move_line_buffer[move_line_buffer_pos][3]) {
-						current_wire[current_wire_pos - 1][3] = Y;
-						current_wire[current_wire_pos][1] = Y;
-					}
-					if (move_line_buffer[move_line_buffer_pos][0] == move_line_buffer[move_line_buffer_pos][2]) {
-						current_wire[current_wire_pos - 1][2] = X;
-						current_wire[current_wire_pos][0] = X;
-					}
+
+					autocorrect_wire_end(X, Y);
 					current_wire[current_wire_pos][2] = X;
 					current_wire[current_wire_pos][3] = Y;
-
-					move_line_buffer[move_line_buffer_pos][2] = X;
-					move_line_buffer[move_line_buffer_pos][3] = Y;
 
 					add_wire(current_wire);
 					current_wire_pos = 0;
@@ -351,7 +348,7 @@ void __fastcall TfrmMain::FormCreate(TObject *Sender)
 	Save1 -> Enabled = false;
 	Saveas1 -> Enabled = false;
 	OpenDialog -> Filter = "LogicBuilder files(.lb)|*.lb|";
-	move_step = 2 * grid_width;
+	move_step = grid_width;
 	frmMain -> DoubleBuffered = true;
 	pbMain -> Invalidate();
 }
@@ -373,9 +370,11 @@ void __fastcall TfrmMain::actTakeCursorExecute(TObject *Sender)
 {
 	cursor_mode = true;
 	wire_mode = false;
+	move_line_buffer_pos = 0;
 	branch_wire_mode = false;
 	current_component = "";
 	logger();
+    pbMain -> Invalidate();
 }
 //---------------------------------------------------------------------------
 
@@ -456,15 +455,6 @@ void __fastcall TfrmMain::actDeleteComponentExecute(TObject *Sender)
 	pbMain -> Invalidate();
 }
 
-void __fastcall TfrmMain::actCheangeMoveStepExecute(TObject *Sender)
-{
-	int coef = ((int)move_step / grid_width + 1) % 5;
-	if (coef == 0)
-		coef = 1;
-	move_step = grid_width * coef;
-}
-//---------------------------------------------------------------------------
-
 void __fastcall TfrmMain::actSaveFileExecute(TObject *Sender)
 {
 	if (file_dir != "") {
@@ -495,7 +485,7 @@ void __fastcall TfrmMain::actSaveFileAsExecute(TObject *Sender)
 	if (SaveDialog -> Execute()) {
 		file_dir = AnsiString(SaveDialog -> FileName).c_str();
 		save_to_file(file_dir + ".lb");
-        frmMain -> Caption = ("LogicBuilder - " + file_dir + ".lb").c_str();
+		frmMain -> Caption = ("LogicBuilder - " + file_dir + ".lb").c_str();
 		Save1 -> Enabled = true;
 	}
 }
@@ -505,7 +495,7 @@ void __fastcall TfrmMain::actSVGExportExecute(TObject *Sender)
 {
 	if (SaveDialog -> Execute()) {
 		file_dir = AnsiString(SaveDialog -> FileName).c_str();
-        to_svg(file_dir);
+		to_svg(file_dir);
 	}
 }
 
@@ -519,6 +509,7 @@ void __fastcall TfrmMain::actSetWireModeExecute(TObject *Sender)
 {
 	wire_mode = true;
 	branch_wire_mode = false;
+	move_line_buffer_pos = 0;
 	wire_stage = wsBegin;
 	cursor_mode = false;
 	current_component = "";
@@ -528,7 +519,7 @@ void __fastcall TfrmMain::actSetWireModeExecute(TObject *Sender)
 void __fastcall TfrmMain::actEndWireExecute(TObject *Sender)
 {
 	if (wire_mode)
-        wire_stage = wsEnd;
+		wire_stage = wsEnd;
 }
 //---------------------------------------------------------------------------
 
@@ -557,7 +548,7 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 				y_dot_highlight = Y;
 				draw_dot_highlight(pbMain, x_dot_highlight, y_dot_highlight);
 			}
-        }
+		}
 	}
 
 	if (wire_mode && wire_stage == wsEnd) {
@@ -574,6 +565,18 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 		move_line_buffer[move_line_buffer_pos][3] = Y;
 		pbMain -> Invalidate();
 	}
+
+	if (selected_comp != -1 && cursor_mode && Shift.Contains(ssLeft)) {
+		int x, y;
+		x = component_array[selected_comp].get_x() + X - x_start_move;
+		y = component_array[selected_comp].get_y() + Y - y_start_move;
+		if (valid_place(x, y, selected_comp)) {
+			component_array[selected_comp] = modify_component_position(component_array[selected_comp], x, y);
+			x_start_move = X;
+			y_start_move = Y;
+			pbMain -> Invalidate();
+		}
+	}
 }
 //---------------------------------------------------------------------------
 
@@ -582,6 +585,7 @@ void __fastcall TfrmMain::actNewFileExecute(TObject *Sender)
 {
 	Save1 -> Enabled = false;
 	Saveas1 -> Enabled = false;
+    frmMain -> Caption = "LogicBuilder";
 
 	component_array_pos = 0;
 	current_component = "";
@@ -609,6 +613,7 @@ void __fastcall TfrmMain::actBranchWireExecute(TObject *Sender)
 	wire_mode = true;
 	branch_wire_mode = true;
 	wire_stage = wsBegin;
+	move_line_buffer_pos = 0;
 	cursor_mode = false;
 	current_component = "";
 }
@@ -634,7 +639,7 @@ void __fastcall TfrmMain::actSetModelModeExecute(TObject *Sender)
 		init_model_array();
 		if (model_scheme() == 1){
 			cursor_mode = true;
-            model_mode = false;
+			model_mode = false;
 			Application -> MessageBox(L"Undefined behaviour", L"LogicBuilder", MB_OK | MB_ICONERROR);
 		}
 
@@ -647,6 +652,23 @@ void __fastcall TfrmMain::actSetModelModeExecute(TObject *Sender)
 void __fastcall TfrmMain::Help1Click(TObject *Sender)
 {
 	frmHelp -> Show();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::pbMainMouseUp(TObject *Sender, TMouseButton Button, TShiftState Shift,
+		  int X, int Y)
+{
+
+	if (selected_comp != -1 && cursor_mode) {
+		int x, y;
+		x = component_array[selected_comp].get_x();
+		y = component_array[selected_comp].get_y();
+		round_coords(&x, &y);
+		if (valid_place(x, y, selected_comp)) {
+			component_array[selected_comp] = modify_component_position(component_array[selected_comp], x, y);
+			pbMain -> Invalidate();
+		}
+	}
 }
 //---------------------------------------------------------------------------
 

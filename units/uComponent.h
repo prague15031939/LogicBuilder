@@ -7,6 +7,7 @@
 
 #include "uCommon.h"
 #include <string>
+#include <cmath>
 using namespace std;
 
 void add_component(int X, int Y);

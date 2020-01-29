@@ -35,6 +35,7 @@ object frmMain: TfrmMain
     ShowHint = False
     OnMouseDown = pbMainMouseDown
     OnMouseMove = pbMainMouseMove
+    OnMouseUp = pbMainMouseUp
     OnPaint = pbMainPaint
     ExplicitLeft = 45
     ExplicitWidth = 718
@@ -135,10 +136,6 @@ object frmMain: TfrmMain
       object N2: TMenuItem
         Caption = '-'
       end
-      object actCheangeMoveStep1: TMenuItem
-        Action = actCheangeMoveStep
-        Caption = 'Change move step'
-      end
       object actDrawGrid1: TMenuItem
         Action = actDrawGrid
         Caption = 'Draw grid'
@@ -196,7 +193,6 @@ object frmMain: TfrmMain
       Category = 'Control'
       Caption = 'actCheangeMoveStep'
       ShortCut = 8208
-      OnExecute = actCheangeMoveStepExecute
     end
     object actOpenFile: TAction
       Category = 'File'

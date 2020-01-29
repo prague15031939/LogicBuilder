@@ -57,8 +57,6 @@ bool valid_wire_end(int *x0, int *y0){
 			if (abs(*x0 - x) < grid_width && abs(*y0 - y[j]) < grid_width && in_wires[j] == -1) {
 				*x0 = x;
 				*y0 = y[j];
-				if (current_wire_pos == 0 && (*x0 != current_wire[0][0] && *y0 != current_wire[0][1] || *y0 != current_wire[0][1] && *x0 != current_wire[0][0]))
-					return false;
 				return true;
 			}
 		}
@@ -95,13 +93,14 @@ bool valid_local_line_is_alone(int target_wire, int mode){
 		int connected_wires[5];
 		wire_array[target_wire].get_connected_wires(connected_wires);
 		int x01, y01, x02, y02;
+		int temp1, temp2;
 		if (mode == 1)
-			wire_array[target_wire].get_first_line(&x01, &y01, &x02, &y02);
+			wire_array[target_wire].get_first_line(&x01, &y01, &x02, &y02, &temp1, &temp2);
 		else
-			wire_array[target_wire].get_last_line(&x01, &y01, &x02, &y02);
+			wire_array[target_wire].get_last_line(&temp1, &temp2, &x01, &y01, &x02, &y02);
 		for (int j = 0; j < wire_array[target_wire].get_connected_wires_amount(); j++) {
 			int x1, y1, x2, y2;
-			wire_array[connected_wires[j]].get_first_line(&x1, &y1, &x2, &y2);
+			wire_array[connected_wires[j]].get_first_line(&x1, &y1, &x2, &y2, &temp1, &temp2);
 			if ((y1 >= y01 && y1 <= y02 || y1 <= y01 && y1 >= y01) &&
 				(x1 >= x01 && x1 <= x02 || x1 <= x01 && x1 >= x01)) {
 				return false;

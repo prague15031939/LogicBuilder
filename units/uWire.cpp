@@ -16,8 +16,11 @@ extern Wire wire_array[300];
 extern int wire_array_pos;
 extern int current_wire[10][4];
 extern int current_wire_pos;
+extern int move_line_buffer[10][4];
+extern int move_line_buffer_pos;
 
 extern int comp_width, comp_height, wire_length, grid_width;
+extern int entry_coords[4][4];
 extern bool branch_wire_mode;
 extern int parent_wire;
 
@@ -108,6 +111,100 @@ void delete_wire(int target){
 	}
 	wire_array_pos--;
 	decrease_wires_index(target);
+
+}
+
+bool pull_connected_wires(Component entity, int new_x, int new_y){
+
+	int in_wires[4], out_wire;
+	entity.get_in_wires(in_wires);
+	out_wire = entity.get_out_wire();
+
+	int num = entity.get_entry_amount();
+	for (int i = 0; i < num; i++)
+		if (in_wires[i] != -1)
+			if (wire_array[in_wires[i]].get_lines_amount() == 1)
+				return false;
+	if (out_wire != -1)
+		if (wire_array[out_wire].get_lines_amount() == 1)
+			return false;
+
+	int x0, y0, x1, y1, x2, y2;
+	for (int i = 0; i < num; i++) {
+		if (in_wires[i] != -1) {
+			wire_array[in_wires[i]].get_last_line(&x0, &y0, &x1, &y1, &x2, &y2);
+
+			if (x1 == x2 && y1 == y2 && x2 == x0){
+				new_x += grid_width;
+				x2 += grid_width;
+			}
+			else if (x1 == x2 && y1 == y2 && y2 == y0) {
+				new_y += grid_width;
+				y2 += grid_width;
+			}
+
+			if (x1 == x2 && y1 != y2){
+				if (x2 != new_x - wire_length)
+					x1 += new_x - wire_length - x2;
+			}
+			else if (y1 == y2 && x1 != x2){
+				if (y2 != new_y + entry_coords[num - 1][i])
+					y1 += new_y + entry_coords[num - 1][i] - y2;
+			}
+			wire_array[in_wires[i]].set_last_line(x1, y1, new_x - wire_length, new_y + entry_coords[num - 1][i]);
+		}
+	}
+
+	if (out_wire != -1) {
+		wire_array[out_wire].get_first_line(&x1, &y1, &x2, &y2, &x0, &y0);
+
+		if (x1 == x2 && y1 == y2 && x1 == x0) {
+			new_x += grid_width;
+			x1 += grid_width;
+		}
+		else if (x1 == x2 && y1 == y2 && y1 == y0) {
+			new_y += grid_width;
+            y1 += grid_width;
+		}
+
+		if (x1 == x2 && y1 != y2){
+			if (x1 != new_x + comp_width + wire_length)
+				x2 += new_x + comp_width + wire_length - x1;
+		}
+		else if (y1 == y2 && x1 != x2){
+			if (y1 != new_y + (int)comp_height / 2)
+				y2 += new_y + (int)comp_height / 2 - y1;
+		}
+		wire_array[out_wire].set_first_line(new_x + comp_width + wire_length, new_y + (int)comp_height / 2, x2, y2);
+	}
+
+	return true;
+}
+
+void autocorrect_wire_end(int X, int Y) {
+
+	if (move_line_buffer[move_line_buffer_pos][1] == move_line_buffer[move_line_buffer_pos][3]) {
+		if (move_line_buffer_pos != 0 && move_line_buffer[move_line_buffer_pos][1] != move_line_buffer[move_line_buffer_pos - 1][1]) {
+			current_wire[current_wire_pos - 1][3] = Y;
+			current_wire[current_wire_pos][1] = Y;
+		}
+		else {
+			current_wire[current_wire_pos + 1][0] = current_wire[current_wire_pos][2] = current_wire[current_wire_pos][0];
+			current_wire[current_wire_pos + 1][1] = current_wire[current_wire_pos][3] = Y;
+			current_wire_pos++;
+		}
+	}
+	if (move_line_buffer[move_line_buffer_pos][0] == move_line_buffer[move_line_buffer_pos][2]) {
+		if (move_line_buffer_pos != 0 && move_line_buffer[move_line_buffer_pos][0] != move_line_buffer[move_line_buffer_pos - 1][0]) {
+			current_wire[current_wire_pos - 1][2] = X;
+			current_wire[current_wire_pos][0] = X;
+		}
+		else {
+			current_wire[current_wire_pos + 1][1] = current_wire[current_wire_pos][3] = current_wire[current_wire_pos][1];
+			current_wire[current_wire_pos + 1][0] = current_wire[current_wire_pos][2] = X;
+			current_wire_pos++;
+		}
+	}
 
 }
 
