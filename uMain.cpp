@@ -35,6 +35,7 @@ extern int comp_width, comp_height, wire_length, grid_width;
 extern int entry_coords[4][4];
 extern int move_step;
 extern int x_start_move, y_start_move;
+extern int picked_line_num;
 extern bool cursor_mode;
 extern bool model_mode;
 extern bool wire_mode;
@@ -103,7 +104,7 @@ void to_svg(std::string dest){
 		Component entity = component_array[i];
 		if (entity.get_type() == "src"){
 			int temp1 = entity.get_y() + (int) comp_height * 0.3;
-            int temp2 = (int) comp_height * 0.45;
+			int temp2 = (int) comp_height * 0.45;
 			sprintf(temp_str, "<rect fill=\"none\" style=\"stroke:black;stroke-width:1\" x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" />\n", entity.get_x(), temp1, comp_width, temp2);
 		}
 		else if (entity.get_type() == "probe"){
@@ -167,7 +168,7 @@ void logger(){
 	for (int i = 0; i < component_array_pos; i++) {
 		file_obj << "component #" << i << ":\n";
 		file_obj << component_array[i].get_type() << " " << component_array[i].get_entry_amount() << "\n";
-        file_obj << "x_coord: " << component_array[i].get_x() << ", y_coord: " << component_array[i].get_y() << "\n";
+		file_obj << "x_coord: " << component_array[i].get_x() << ", y_coord: " << component_array[i].get_y() << "\n";
 		int in_wires[4];
 		component_array[i].get_in_wires(in_wires);
 		file_obj << "in wires: " << in_wires[0] << " " << in_wires[1] << " "  << in_wires[2] << " "  << in_wires[3] << "\n";
@@ -181,7 +182,8 @@ void logger(){
 		int connected_wires[5];
 		wire_array[i].get_connected_wires(connected_wires);
 		file_obj << "connected wires: " << connected_wires[0] << " " << connected_wires[1] << " "  << connected_wires[2] << " "  << connected_wires[3] << " " << connected_wires[4] << "\n";
-		file_obj << "parent wire: " << wire_array[i].get_parent_wire() << "\n\n";
+		file_obj << "parent wire: " << wire_array[i].get_parent_wire() << "\n";
+		file_obj << "parent line number: " << wire_array[i].get_parent_line_num() << "\n\n";
 	}
 	file_obj.close();
 }
@@ -244,6 +246,7 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 				break;
 			}
 		}
+		picked_line_num = -1;
 		for (int i = 0; i < wire_array_pos; i++) {
 			int lines[10][4];
 			wire_array[i].get_lines(lines);
@@ -253,6 +256,11 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 					(abs(Y - lines[j][1]) < 4 && abs(Y - lines[j][3]) < 4 &&
 					(X >= lines[j][0] && X <= lines[j][2] || X <= lines[j][0] && X >= lines[j][2]))) {
 					selected_wire = i;
+					if (Shift.Contains(ssLeft)) {
+						x_start_move = X;
+						y_start_move = Y;
+						picked_line_num = j;
+					}
 					break;
 				}
 			}
@@ -577,6 +585,37 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 			pbMain -> Invalidate();
 		}
 	}
+
+	if (selected_wire != -1 && picked_line_num != -1 && cursor_mode && Shift.Contains(ssLeft)) {
+		int dx, dy;
+		dx = X - x_start_move;
+		dy = Y - y_start_move;
+		int lines[10][4];
+		wire_array[selected_wire].get_lines(lines);
+		int i = picked_line_num;
+
+		if (valid_line_is_alone(selected_wire, picked_line_num) && (i != 0 || i == 0 && wire_array[selected_wire].get_parent_wire() != -1) && i != wire_array[selected_wire].get_lines_amount() - 1) {
+			if (lines[i][1] == lines[i][3] && lines[i][0] != lines[i][2]) {
+				lines[i][1] += dy;
+				lines[i][3] += dy;
+				lines[i + 1][1] += dy;
+				if (i != 0)
+					lines[i - 1][3] += dy;
+			}
+			if (lines[i][0] == lines[i][2] && lines[i][1] != lines[i][3]) {
+				lines[i][0] += dx;
+				lines[i][2] += dx;
+				lines[i + 1][0] += dx;
+				if (i != 0)
+					lines[i - 1][2] += dx;
+			}
+			wire_array[selected_wire].set_lines(lines);
+			x_start_move = X;
+			y_start_move = Y;
+			pbMain -> Invalidate();
+		}
+	}
+
 }
 //---------------------------------------------------------------------------
 
@@ -585,7 +624,7 @@ void __fastcall TfrmMain::actNewFileExecute(TObject *Sender)
 {
 	Save1 -> Enabled = false;
 	Saveas1 -> Enabled = false;
-    frmMain -> Caption = "LogicBuilder";
+	frmMain -> Caption = "LogicBuilder";
 
 	component_array_pos = 0;
 	current_component = "";
@@ -658,7 +697,6 @@ void __fastcall TfrmMain::Help1Click(TObject *Sender)
 void __fastcall TfrmMain::pbMainMouseUp(TObject *Sender, TMouseButton Button, TShiftState Shift,
 		  int X, int Y)
 {
-
 	if (selected_comp != -1 && cursor_mode) {
 		int x, y;
 		x = component_array[selected_comp].get_x();

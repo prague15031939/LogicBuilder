@@ -83,7 +83,7 @@ Component modify_component_position(Component entity, int new_x, int new_y){
 
 	int out_wire = entity.get_out_wire();
 	if (out_wire != -1)
-		if (!valid_local_line_is_alone(out_wire, 1))
+		if (!valid_line_is_alone(out_wire, 0))
 			return entity;
 
 	int in_wires[4] = {-1, -1, -1, -1};
@@ -91,7 +91,7 @@ Component modify_component_position(Component entity, int new_x, int new_y){
 	int num = entity.get_entry_amount();
 	for (int i = 0; i < num; i++)
 		if (in_wires[i] != -1)
-			if (!valid_local_line_is_alone(in_wires[i], 0))
+			if (!valid_line_is_alone(in_wires[i], wire_array[in_wires[i]].get_lines_amount() - 1))
 				return entity;
 
 	if (!pull_connected_wires(entity, new_x, new_y))

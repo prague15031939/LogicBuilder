@@ -19,6 +19,7 @@ extern int current_wire_pos;
 
 extern int comp_width, comp_height, wire_length, grid_width;
 extern int entry_coords[4][4];
+extern int picked_line_num;
 
 bool valid_wire_start(int *x0, int *y0){
 	for (int i = 0; i < component_array_pos; i++) {
@@ -66,6 +67,7 @@ bool valid_wire_end(int *x0, int *y0){
 
 int valid_branch_wire_start(int *x0, int *y0){
 
+	picked_line_num = -1;
 	for (int i = 0; i < wire_array_pos; i++) {
 		int lines[10][4];
 		wire_array[i].get_lines(lines);
@@ -75,12 +77,11 @@ int valid_branch_wire_start(int *x0, int *y0){
 				(abs(*y0 - lines[j][1]) < grid_width && abs(*y0 - lines[j][3]) < grid_width &&
 				(*x0 >= lines[j][0] && *x0 <= lines[j][2] || *x0 <= lines[j][0] && *x0 >= lines[j][2]))) {
 
-				if (lines[j][2] - lines[j][0] != 0){
+				picked_line_num = j;
+				if (lines[j][2] - lines[j][0] != 0)
 					*y0 = lines[j][1];
-				}
-				else if (lines[j][3] - lines[j][1] != 0) {
-					 *x0 = lines[j][2];
-					 }
+				else if (lines[j][3] - lines[j][1] != 0)
+					*x0 = lines[j][2];
 				return i;
 			}
 		}
@@ -88,24 +89,13 @@ int valid_branch_wire_start(int *x0, int *y0){
 	return -1;
 }
 
-bool valid_local_line_is_alone(int target_wire, int mode){
+bool valid_line_is_alone(int target_wire, int target_line_num) {
 	if (wire_array[target_wire].get_connected_wires_amount() != 0) {
 		int connected_wires[5];
 		wire_array[target_wire].get_connected_wires(connected_wires);
-		int x01, y01, x02, y02;
-		int temp1, temp2;
-		if (mode == 1)
-			wire_array[target_wire].get_first_line(&x01, &y01, &x02, &y02, &temp1, &temp2);
-		else
-			wire_array[target_wire].get_last_line(&temp1, &temp2, &x01, &y01, &x02, &y02);
-		for (int j = 0; j < wire_array[target_wire].get_connected_wires_amount(); j++) {
-			int x1, y1, x2, y2;
-			wire_array[connected_wires[j]].get_first_line(&x1, &y1, &x2, &y2, &temp1, &temp2);
-			if ((y1 >= y01 && y1 <= y02 || y1 <= y01 && y1 >= y01) &&
-				(x1 >= x01 && x1 <= x02 || x1 <= x01 && x1 >= x01)) {
+		for (int i = 0; i < wire_array[target_wire].get_connected_wires_amount(); i++)
+			if (wire_array[connected_wires[i]].get_parent_line_num() == target_line_num)
 				return false;
-			}
-		}
 	}
 	return true;
 }

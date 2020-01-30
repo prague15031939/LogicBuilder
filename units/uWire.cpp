@@ -23,7 +23,7 @@ extern int comp_width, comp_height, wire_length, grid_width;
 extern int entry_coords[4][4];
 extern bool branch_wire_mode;
 extern int parent_wire;
-
+extern int picked_line_num;
 
 void add_wire(int item[10][4]){
 	if (wire_array_pos == 300)
@@ -46,9 +46,12 @@ void add_wire(int item[10][4]){
 	if (!branch_wire_mode) {
 		component_array[start].set_out_wire(wire_array_pos);
 		wire_array[wire_array_pos].set_parent_wire(-1);
+		wire_array[wire_array_pos].set_parent_line_num(-1);
 	}
-	else
+	else {
 		wire_array[wire_array_pos].set_parent_wire(parent_wire);
+		wire_array[wire_array_pos].set_parent_line_num(picked_line_num);
+	}
 	component_array[end[0]].set_in_wire(wire_array_pos, end[1]);
 
 	for (int i = 0; i < 5; i++) {

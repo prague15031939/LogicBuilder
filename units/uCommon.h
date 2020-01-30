@@ -175,6 +175,12 @@ public:
 	int get_parent_wire(){
 		return this->parent_wire;
 	}
+	void set_parent_line_num(int value) {
+		this->parent_line_num = value;
+	}
+	int get_parent_line_num() {
+        return this->parent_line_num;
+    }
 
 	void get_lines(arr[10][4]){
 		for (int i = 0; i < 10; i++) {
@@ -212,7 +218,8 @@ private:
 	int in_component, out_component, out_component_entry;
 	int connected_wires[5];
 	int connected_wires_amount;
-    int parent_wire;
+	int parent_wire;
+	int parent_line_num;
 };
 
 //---------------------------------------------------------------------------
