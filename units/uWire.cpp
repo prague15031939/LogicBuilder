@@ -126,10 +126,10 @@ bool pull_connected_wires(Component entity, int new_x, int new_y){
 	int num = entity.get_entry_amount();
 	for (int i = 0; i < num; i++)
 		if (in_wires[i] != -1)
-			if (wire_array[in_wires[i]].get_lines_amount() == 1)
+			if (valid_two_lines_are_same(in_wires[i], wire_array[in_wires[i]].get_lines_amount() - 2))
 				return false;
 	if (out_wire != -1)
-		if (wire_array[out_wire].get_lines_amount() == 1)
+		if (valid_two_lines_are_same(out_wire, 0))
 			return false;
 
 	int x0, y0, x1, y1, x2, y2;
@@ -167,7 +167,7 @@ bool pull_connected_wires(Component entity, int new_x, int new_y){
 		}
 		else if (x1 == x2 && y1 == y2 && y1 == y0) {
 			new_y += grid_width;
-            y1 += grid_width;
+			y1 += grid_width;
 		}
 
 		if (x1 == x2 && y1 != y2){

@@ -100,6 +100,139 @@ bool valid_line_is_alone(int target_wire, int target_line_num) {
 	return true;
 }
 
+bool valid_wire_start_can_move(int target_wire, int dr) {
+
+	int lines[10][4], parent_line_num;
+	int parent = wire_array[target_wire].get_parent_wire();
+	int x1, y1, x2, y2, temp1, temp2;
+	if (parent != -1) {
+		wire_array[target_wire].get_first_line(&x1, &y1, &x2, &y2, &temp1, &temp2);
+		wire_array[parent].get_lines(lines);
+		parent_line_num = wire_array[target_wire].get_parent_line_num();
+		if (x1 == x2 && y1 != y2) {
+			if (!(x1 + dr >= lines[parent_line_num][0] && x1 + dr <= lines[parent_line_num][2] ||
+				x1 + dr <= lines[parent_line_num][0] && x1 + dr >= lines[parent_line_num][2]))
+				return false;
+		}
+		if (y1 == y2 && x1 != x2) {
+			if (!(y1 + dr >= lines[parent_line_num][1] && y1 + dr <= lines[parent_line_num][3] ||
+				y1 + dr <= lines[parent_line_num][1] && y1 + dr >= lines[parent_line_num][3]))
+				return false;
+		}
+	}
+	return true;
+}
+
+bool valid_line_can_move(int target_wire, int i, int lines[10][4], int dr) {
+
+	int connected_wires[5];
+	int x1, y1, x2, y2, temp1, temp2;
+	wire_array[target_wire].get_connected_wires(connected_wires);
+
+	if (lines[i][0] == lines[i][2] && lines[i][1] != lines[i][3]) {
+
+		if (i != 0)
+			if (lines[i][2] == lines[i - 1][0] && lines[i - 1][1] != lines[i - 1][3])
+				return false;
+		if (i != wire_array[target_wire].get_lines_amount() - 1)
+			if (lines[i][0] == lines[i + 1][2] && lines[i + 1][1] != lines[i + 1][3])
+				return false;
+
+		for (int j = 0; j < wire_array[target_wire].get_connected_wires_amount(); j++) {
+			if (i != 0 && wire_array[connected_wires[j]].get_parent_line_num() == i - 1) {
+				wire_array[connected_wires[j]].get_first_line(&x1, &y1, &x2, &y2, &temp1, &temp2);
+				if (!(x1 >= lines[i - 1][0] && x1 <= lines[i - 1][2] + dr ||
+					x1 <= lines[i - 1][0] && x1 >= lines[i - 1][2] + dr))
+					return false;
+			}
+			if (wire_array[connected_wires[j]].get_parent_line_num() == i + 1) {
+				wire_array[connected_wires[j]].get_first_line(&x1, &y1, &x2, &y2, &temp1, &temp2);
+				if (!(x1 >= lines[i + 1][0] + dr && x1 <= lines[i + 1][2] ||
+					x1 <= lines[i + 1][0] + dr && x1 >= lines[i + 1][2]))
+					return false;
+			}
+		}
+	}
+	else if (lines[i][1] == lines[i][3] && lines[i][0] != lines[i][2]) {
+
+		if (i != 0)
+			if (lines[i][3] == lines[i - 1][1] && lines[i - 1][0] != lines[i - 1][2])
+				return false;
+		if (i != wire_array[target_wire].get_lines_amount() - 1)
+			if (lines[i][1] == lines[i + 1][3] && lines[i + 1][0] != lines[i + 1][2])
+				return false;
+
+		for (int j = 0; j < wire_array[target_wire].get_connected_wires_amount(); j++) {
+			if (i != 0 && wire_array[connected_wires[j]].get_parent_line_num() == i - 1) {
+				wire_array[connected_wires[j]].get_first_line(&x1, &y1, &x2, &y2, &temp1, &temp2);
+				if (!(y1 >= lines[i - 1][1] && y1 <= lines[i - 1][3] + dr ||
+					y1 <= lines[i - 1][1] && y1 >= lines[i - 1][3] + dr))
+					return false;
+			}
+			if (wire_array[connected_wires[j]].get_parent_line_num() == i + 1) {
+				wire_array[connected_wires[j]].get_first_line(&x1, &y1, &x2, &y2, &temp1, &temp2);
+				if (!(y1 >= lines[i + 1][1] + dr && y1 <= lines[i + 1][3] ||
+					y1 <= lines[i + 1][1] + dr && y1 >= lines[i + 1][3]))
+					return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+bool valid_two_lines_are_same(int target_wire, int i) {
+	int lines[10][4];
+	wire_array[target_wire].get_lines(lines);
+
+	if (lines[i][0] == lines[i][2] && lines[i][1] != lines[i][3]) {
+		if (lines[i][0] == lines[i + 1][2] && lines[i + 1][1] != lines[i + 1][3])
+			return true;
+	}
+	else if (lines[i][1] == lines[i][3] && lines[i][0] != lines[i][2]) {
+		if (lines[i][1] == lines[i + 1][3] && lines[i + 1][0] != lines[i + 1][2])
+			return true;
+	}
+	return false;
+}
+
+bool valid_component_can_move(Component entity, int dx, int dy) {
+
+	int in_wires[4];
+	int lines[10][4];
+	int out_wire = entity.get_out_wire();
+	entity.get_in_wires(in_wires);
+
+	for (int i = 0; i < entity.get_entry_amount(); i++) {
+		if (in_wires[i] != -1) {
+			wire_array[in_wires[i]].get_lines(lines);
+			int num = wire_array[in_wires[i]].get_lines_amount();
+			if (lines[num - 1][1] == lines[num - 1][3] && lines[num - 1][0] != lines[num - 1][2]) {
+				if (!valid_line_can_move(in_wires[i], num - 1, lines, dy))
+					return false;
+			}
+			else if (lines[num - 1][0] == lines[num - 1][2] && lines[num - 1][1] != lines[num - 1][3]) {
+				if (!valid_line_can_move(in_wires[i], num - 1, lines, dx))
+					return false;
+			}
+		}
+	}
+
+	if (out_wire != -1) {
+		wire_array[out_wire].get_lines(lines);
+		if (lines[0][1] == lines[0][3] && lines[0][0] != lines[0][2]) {
+			if (!valid_line_can_move(out_wire, 0, lines, dy))
+				return false;
+		}
+		else if (lines[0][0] == lines[0][2] && lines[0][1] != lines[0][3]) {
+			if (!valid_line_can_move(out_wire, 0, lines, dx))
+				return false;
+		}
+	}
+
+	return true;
+}
+
 bool valid_place(int x0, int y0, int except){
 	bool res = true;
 	for (int i = 0; i < component_array_pos; i++) {

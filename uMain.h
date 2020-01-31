@@ -22,7 +22,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <fstream.h>
-#include "uHelp.h"
+
 //---------------------------------------------------------------------------
 using namespace std;
 
@@ -95,7 +95,6 @@ __published:	// IDE-managed Components
 	void __fastcall actBranchWireExecute(TObject *Sender);
 	void __fastcall actDrawGridExecute(TObject *Sender);
 	void __fastcall actSetModelModeExecute(TObject *Sender);
-	void __fastcall Help1Click(TObject *Sender);
 	void __fastcall pbMainMouseUp(TObject *Sender, TMouseButton Button, TShiftState Shift,
           int X, int Y);
 

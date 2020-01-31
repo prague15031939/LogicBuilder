@@ -340,7 +340,7 @@ void __fastcall TfrmMain::pbMainPaint(TObject *Sender)
 		draw_dot_highlight(pbMain, x_dot_highlight, y_dot_highlight);
 	}
 	for (int i = 0; i < wire_array_pos; i++) {
-		draw_wire(pbMain, wire_array[i]);
+		draw_wire(pbMain, wire_array[i], 'd');
 	}
 	if (selected_wire != -1) {
 		draw_wire_highlight(pbMain, selected_wire);
@@ -596,18 +596,22 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 
 		if (valid_line_is_alone(selected_wire, picked_line_num) && (i != 0 || i == 0 && wire_array[selected_wire].get_parent_wire() != -1) && i != wire_array[selected_wire].get_lines_amount() - 1) {
 			if (lines[i][1] == lines[i][3] && lines[i][0] != lines[i][2]) {
-				lines[i][1] += dy;
-				lines[i][3] += dy;
-				lines[i + 1][1] += dy;
-				if (i != 0)
-					lines[i - 1][3] += dy;
+				if ((i != 0 || i == 0 && wire_array[selected_wire].get_parent_wire() != -1 && valid_wire_start_can_move(selected_wire, dy)) && valid_line_can_move(selected_wire, i, lines, dy)) {
+					lines[i][1] += dy;
+					lines[i][3] += dy;
+					lines[i + 1][1] += dy;
+					if (i != 0)
+						lines[i - 1][3] += dy;
+				}
 			}
 			if (lines[i][0] == lines[i][2] && lines[i][1] != lines[i][3]) {
-				lines[i][0] += dx;
-				lines[i][2] += dx;
-				lines[i + 1][0] += dx;
-				if (i != 0)
-					lines[i - 1][2] += dx;
+				if ((i != 0 || i == 0 && wire_array[selected_wire].get_parent_wire() != -1 && valid_wire_start_can_move(selected_wire, dx)) && valid_line_can_move(selected_wire, i, lines, dx)) {
+					lines[i][0] += dx;
+					lines[i][2] += dx;
+					lines[i + 1][0] += dx;
+					if (i != 0)
+						lines[i - 1][2] += dx;
+				}
 			}
 			wire_array[selected_wire].set_lines(lines);
 			x_start_move = X;
@@ -685,12 +689,6 @@ void __fastcall TfrmMain::actSetModelModeExecute(TObject *Sender)
 	}
 
 	pbMain -> Invalidate();
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::Help1Click(TObject *Sender)
-{
-	frmHelp -> Show();
 }
 //---------------------------------------------------------------------------
 

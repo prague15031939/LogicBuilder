@@ -132,7 +132,7 @@ void draw_entries(TPaintBox *pb, Component entity){
 	}
 }
 
-void draw_wire(TPaintBox *pb, Wire entity){
+void draw_wire(TPaintBox *pb, Wire entity, char mode){
 
 	int lines_amount;
 	lines_amount = entity.get_lines_amount();
@@ -140,8 +140,14 @@ void draw_wire(TPaintBox *pb, Wire entity){
 	entity.get_lines(lines);
 
 	for (int i = 0; i < lines_amount; i++) {
-		pb -> Canvas -> MoveTo(lines[i][0], lines[i][1]);
-		pb -> Canvas -> LineTo(lines[i][2], lines[i][3]);
+		if (mode == 'd') {
+            pb -> Canvas -> MoveTo(lines[i][0], lines[i][1]);
+			pb -> Canvas -> LineTo(lines[i][2], lines[i][3]);
+		}
+		else if (mode == 'h') {
+			pb -> Canvas -> Rectangle(lines[i][0] - 3, lines[i][1] - 3, lines[i][0] + 3, lines[i][1] + 3);
+            pb -> Canvas -> Rectangle(lines[i][2] - 3, lines[i][3] - 3, lines[i][2] + 3, lines[i][3] + 3);
+		}
 	}
 }
 
@@ -173,12 +179,14 @@ void draw_highlight(TPaintBox *pb, int i){
 void draw_wire_highlight(TPaintBox *pb, int i){
 
 	pb -> Canvas -> Pen -> Color = clRed;
-	pb -> Canvas -> Pen -> Width += 1;
+	pb -> Canvas -> Brush -> Color = clRed;
+	//pb -> Canvas -> Pen -> Width += 1;
 
-	draw_wire(pb, wire_array[i]);
+	draw_wire(pb, wire_array[i], 'h');
 
 	pb -> Canvas -> Pen -> Color = clBlack;
-	pb -> Canvas -> Pen -> Width -= 1;
+	pb -> Canvas -> Brush -> Color = clWhite;
+	//pb -> Canvas -> Pen -> Width -= 1;
 }
 
 void draw_dot_highlight(TPaintBox *pb, int x, int y){

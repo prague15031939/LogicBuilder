@@ -94,6 +94,9 @@ Component modify_component_position(Component entity, int new_x, int new_y){
 			if (!valid_line_is_alone(in_wires[i], wire_array[in_wires[i]].get_lines_amount() - 1))
 				return entity;
 
+	if (!valid_component_can_move(entity, new_x - entity.get_x(), new_y - entity.get_y()))
+		return entity;
+
 	if (!pull_connected_wires(entity, new_x, new_y))
 		return entity;
 
