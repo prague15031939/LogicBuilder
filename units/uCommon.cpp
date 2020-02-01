@@ -35,6 +35,9 @@ int move_line_buffer_pos = 0;
 int selected_comp = -1;
 int selected_wire = -1;
 
+int guides[20][4];
+int guides_pos;
+
 std::string file_dir = "";
 bool to_draw_grid = true;
 

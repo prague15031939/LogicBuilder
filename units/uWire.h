@@ -6,7 +6,7 @@
 #include "uCommon.h"
 
 void add_wire(int item[10][4]);
-void delete_wire(int target);
+void delete_wire(int target, char mode);
 bool pull_connected_wires(Component entity, int new_x, int new_y);
 void autocorrect_wire_end(int X, int Y);
 void decrease_wires_index(int index);

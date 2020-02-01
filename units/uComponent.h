@@ -11,7 +11,7 @@
 using namespace std;
 
 void add_component(int X, int Y);
-void delete_component(int target);
+void delete_component(int target, char mode);
 void delete_in_component_in_all_connected_wires(int out_wire);
 void decrease_components_index(int index);
 std::string fetch_component_name(std::string src);

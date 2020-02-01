@@ -46,6 +46,9 @@ extern int move_line_buffer_pos;
 extern int selected_comp;
 extern int selected_wire;
 
+extern int guides[20][4];
+extern int guides_pos;
+
 extern std::string file_dir;
 extern bool to_draw_grid;
 //---------------------------------------------------------------------------
@@ -239,6 +242,7 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 			Y0 = component_array[i].get_y();
 			if (X >= X0 && X <= X0 + comp_width && Y >= Y0 && Y <= Y0 + comp_height) {
 				selected_comp = i;
+                detect_closest_guides(pbMain, selected_comp);
 				if (Shift.Contains(ssLeft)) {
 					x_start_move = X;
 					y_start_move = Y;
@@ -348,6 +352,9 @@ void __fastcall TfrmMain::pbMainPaint(TObject *Sender)
 	if (wire_mode && wire_stage != wsBegin) {
 		draw_temp_lines(pbMain);
 	}
+	if (cursor_mode && selected_comp != -1) {
+		draw_guides(pbMain);
+	}
 }
 //---------------------------------------------------------------------------
 
@@ -449,13 +456,30 @@ void __fastcall TfrmMain::actMoveRightExecute(TObject *Sender)
 void __fastcall TfrmMain::actDeleteComponentExecute(TObject *Sender)
 {
 	if (selected_comp != -1) {
-		delete_component(selected_comp);
+		delete_component(selected_comp, 'd');
 		frmMain -> Saveas1 -> Enabled = true;
 		selected_comp = -1;
 	}
 	if (selected_wire != -1) {
-		delete_wire(selected_wire);
-        frmMain -> Saveas1 -> Enabled = true;
+		delete_wire(selected_wire, 'd');
+		frmMain -> Saveas1 -> Enabled = true;
+		selected_wire = -1;
+	}
+	cursor_mode = true;
+	current_component = "";
+	pbMain -> Invalidate();
+}
+
+void __fastcall TfrmMain::actDeleteObjectTreeExecute(TObject *Sender)
+{
+	if (selected_comp != -1) {
+		delete_component(selected_comp, 't');
+		frmMain -> Saveas1 -> Enabled = true;
+		selected_comp = -1;
+	}
+	if (selected_wire != -1) {
+		delete_wire(selected_wire, 't');
+		frmMain -> Saveas1 -> Enabled = true;
 		selected_wire = -1;
 	}
 	cursor_mode = true;
@@ -492,8 +516,12 @@ void __fastcall TfrmMain::actSaveFileAsExecute(TObject *Sender)
 {
 	if (SaveDialog -> Execute()) {
 		file_dir = AnsiString(SaveDialog -> FileName).c_str();
-		save_to_file(file_dir + ".lb");
-		frmMain -> Caption = ("LogicBuilder - " + file_dir + ".lb").c_str();
+		char temp[200];
+		file_dir.copy(temp, 3, file_dir.length() - 3);
+		if (!(temp[0] == '.' && temp[1] == 'l' && temp[2] == 'b'))
+			file_dir += ".lb";
+		save_to_file(file_dir);
+		frmMain -> Caption = ("LogicBuilder - " + file_dir).c_str();
 		Save1 -> Enabled = true;
 	}
 }
@@ -578,6 +606,7 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 		int x, y;
 		x = component_array[selected_comp].get_x() + X - x_start_move;
 		y = component_array[selected_comp].get_y() + Y - y_start_move;
+		detect_closest_guides(pbMain, selected_comp);
 		if (valid_place(x, y, selected_comp)) {
 			component_array[selected_comp] = modify_component_position(component_array[selected_comp], x, y);
 			x_start_move = X;
@@ -699,6 +728,7 @@ void __fastcall TfrmMain::pbMainMouseUp(TObject *Sender, TMouseButton Button, TS
 		int x, y;
 		x = component_array[selected_comp].get_x();
 		y = component_array[selected_comp].get_y();
+        guides_pos = 0;
 		round_coords(&x, &y);
 		if (valid_place(x, y, selected_comp)) {
 			component_array[selected_comp] = modify_component_position(component_array[selected_comp], x, y);
@@ -706,5 +736,4 @@ void __fastcall TfrmMain::pbMainMouseUp(TObject *Sender, TMouseButton Button, TS
 		}
 	}
 }
-//---------------------------------------------------------------------------
 

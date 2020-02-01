@@ -37,9 +37,7 @@ object frmMain: TfrmMain
     OnMouseMove = pbMainMouseMove
     OnMouseUp = pbMainMouseUp
     OnPaint = pbMainPaint
-    ExplicitLeft = 45
-    ExplicitWidth = 718
-    ExplicitHeight = 599
+    ExplicitLeft = 47
   end
   object lboxComponents: TListBox
     Left = 0
@@ -73,6 +71,7 @@ object frmMain: TfrmMain
       'probe')
     TabOrder = 0
     OnDblClick = lboxComponentsDblClick
+    ExplicitLeft = -6
   end
   object menuMain: TMainMenu
     Images = ImageList
@@ -143,6 +142,10 @@ object frmMain: TfrmMain
       object actDeleteComponent1: TMenuItem
         Action = actDeleteComponent
         Caption = 'Delete object'
+      end
+      object DeleteObjectTree1: TMenuItem
+        Action = actDeleteObjectTree
+        Caption = 'Delete object tree'
       end
     end
     object Help1: TMenuItem
@@ -260,6 +263,12 @@ object frmMain: TfrmMain
       Caption = 'actSetModelMode'
       ShortCut = 86
       OnExecute = actSetModelModeExecute
+    end
+    object actDeleteObjectTree: TAction
+      Category = 'Control'
+      Caption = 'actDeleteObjectTree'
+      ShortCut = 8238
+      OnExecute = actDeleteObjectTreeExecute
     end
   end
   object SaveDialog: TSaveDialog

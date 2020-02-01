@@ -56,19 +56,25 @@ void add_component(int X, int Y){
 
 }
 
-void delete_component(int target){
+void delete_component(int target, char mode){
 	int in_wires[4];
 	component_array[target].get_in_wires(in_wires);
 	for (int i = 0; i < 4; i++) {
 		if (in_wires[i] != -1) {
 			wire_array[in_wires[i]].set_in_out_component(wire_array[in_wires[i]].get_in_component(), -1);
 			wire_array[in_wires[i]].set_out_component_entry(-1);
+			if (mode == 't') {
+				delete_wire(in_wires[i], 't');
+				component_array[target].get_in_wires(in_wires);
+			}
 		}
 	}
 	int out_wire = component_array[target].get_out_wire();
 	if (out_wire != -1) {
 		wire_array[out_wire].set_in_out_component(-1, wire_array[out_wire].get_out_component());
 		delete_in_component_in_all_connected_wires(out_wire);
+		if (mode == 't')
+	        delete_wire(out_wire, 't');
 	}
 
 	for (int i = target; i < component_array_pos - 1; i++) {

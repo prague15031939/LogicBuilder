@@ -65,14 +65,22 @@ void add_wire(int item[10][4]){
 	wire_array[wire_array_pos++].set_lines_amount(++current_wire_pos);
 }
 
-void delete_wire(int target){
+void delete_wire(int target, char mode){
 
 	delete_in_component_in_all_connected_wires(target);
 
 	int connected_wires[5];
 	wire_array[target].get_connected_wires(connected_wires);
-	for (int i = 0; i < wire_array[target].get_connected_wires_amount(); i++)
-		wire_array[connected_wires[i]].set_parent_wire(-1);
+	if (mode == 't') {
+		while (connected_wires[0] != -1) {
+			delete_wire(connected_wires[0], 't');
+			wire_array[target].get_connected_wires(connected_wires);
+		}
+	}
+	else if (mode == 'd') {
+		for (int i = 0; i < wire_array[target].get_connected_wires_amount(); i++)
+			wire_array[connected_wires[i]].set_parent_wire(-1);
+	}
 
 	int parent = wire_array[target].get_parent_wire();
 	if (parent != -1) {
@@ -100,14 +108,7 @@ void delete_wire(int target){
 	}
 
 	int out_comp = wire_array[target].get_out_component();
-	int in_wires[4];
-	component_array[out_comp].get_in_wires(in_wires);
-	for (int i = 0; i < component_array[out_comp].get_entry_amount(); i++) {
-		if (in_wires[i] == target) {
-			component_array[out_comp].set_in_wire(-1, i);
-			break;
-		}
-	}
+	component_array[out_comp].set_in_wire(-1, wire_array[target].get_out_component_entry());
 
 	for (int i = target; i < wire_array_pos - 1; i++) {
 		wire_array[i] = wire_array[i + 1];

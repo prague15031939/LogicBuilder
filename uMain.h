@@ -72,6 +72,8 @@ __published:	// IDE-managed Components
 	TMenuItem *actDrawGrid1;
 	TAction *actSetModelMode;
 	TMenuItem *actSetModelMode1;
+	TMenuItem *DeleteObjectTree1;
+	TAction *actDeleteObjectTree;
 	void __fastcall pbMainPaint(TObject *Sender);
 	void __fastcall FormCreate(TObject *Sender);
 	void __fastcall lboxComponentsDblClick(TObject *Sender);
@@ -97,6 +99,7 @@ __published:	// IDE-managed Components
 	void __fastcall actSetModelModeExecute(TObject *Sender);
 	void __fastcall pbMainMouseUp(TObject *Sender, TMouseButton Button, TShiftState Shift,
           int X, int Y);
+	void __fastcall actDeleteObjectTreeExecute(TObject *Sender);
 
 private:	// User declarations
 public:		// User declarations

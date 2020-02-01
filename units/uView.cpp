@@ -23,6 +23,9 @@ extern int entry_coords[4][4];
 extern int move_line_buffer[10][4];
 extern int move_line_buffer_pos;
 
+extern int guides[20][4];
+extern int guides_pos;
+
 
 void draw_component(TPaintBox *pb, Component entity){
 
@@ -158,6 +161,30 @@ void draw_temp_lines(TPaintBox *pb){
 	}
 }
 
+void draw_guides(TPaintBox *pb) {
+
+	pb -> Canvas -> Pen -> Color = clMedGray;
+	pb -> Canvas -> Pen -> Style = psDash;
+
+	for (int i = 0; i < guides_pos; i++) {
+		pb -> Canvas -> MoveTo(guides[i][0], guides[i][1]);
+		pb -> Canvas -> LineTo(guides[i][2], guides[i][3]);
+
+		if (guides[i][0] == guides[i][2]) {
+			pb -> Canvas -> MoveTo(guides[i][0] + comp_width, guides[i][1]);
+			pb -> Canvas -> LineTo(guides[i][2] + comp_width, guides[i][3]);
+		}
+		if (guides[i][1] == guides[i][3]) {
+			pb -> Canvas -> MoveTo(guides[i][0], guides[i][1] + comp_height);
+			pb -> Canvas -> LineTo(guides[i][2], guides[i][3] + comp_height);
+		}
+	}
+
+	pb -> Canvas -> Pen -> Color = clBlack;
+	pb -> Canvas -> Pen -> Style = psSolid;
+
+}
+
 void draw_highlight(TPaintBox *pb, int i){
 
 	pb -> Canvas -> Pen -> Color = clHighlight;
@@ -180,13 +207,11 @@ void draw_wire_highlight(TPaintBox *pb, int i){
 
 	pb -> Canvas -> Pen -> Color = clRed;
 	pb -> Canvas -> Brush -> Color = clRed;
-	//pb -> Canvas -> Pen -> Width += 1;
 
 	draw_wire(pb, wire_array[i], 'h');
 
 	pb -> Canvas -> Pen -> Color = clBlack;
 	pb -> Canvas -> Brush -> Color = clWhite;
-	//pb -> Canvas -> Pen -> Width -= 1;
 }
 
 void draw_dot_highlight(TPaintBox *pb, int x, int y){
@@ -213,6 +238,26 @@ void draw_grid(TPaintBox *pb){
 	pb -> Canvas -> Pen -> Color = clBlack;
 }
 
+void detect_closest_guides(TPaintBox *pb, int target_comp) {
+	guides_pos = 0;
+	int x = component_array[target_comp].get_x();
+	int y = component_array[target_comp].get_y();
+
+	for (int i = 0; i < component_array_pos; i++) {
+		int temp_x = component_array[i].get_x();
+		int temp_y = component_array[i].get_y();
+		if (abs(x - temp_x) <= comp_width && guides_pos < 20 && i != target_comp) {
+			guides[guides_pos][0] = guides[guides_pos][2] = temp_x;
+			guides[guides_pos][1] = 0;
+			guides[guides_pos++][3] = pb -> Height;
+		}
+		if (abs(y - temp_y) <= comp_height && guides_pos < 20 && i != target_comp) {
+			guides[guides_pos][1] = guides[guides_pos][3] = temp_y;
+			guides[guides_pos][0] = 0;
+			guides[guides_pos++][2] = pb -> Width;
+		}
+	}
+}
 
 
 
