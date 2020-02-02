@@ -71,7 +71,6 @@ object frmMain: TfrmMain
       'probe')
     TabOrder = 0
     OnDblClick = lboxComponentsDblClick
-    ExplicitLeft = -6
   end
   object menuMain: TMainMenu
     Images = ImageList

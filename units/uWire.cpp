@@ -125,14 +125,6 @@ bool pull_connected_wires(Component entity, int new_x, int new_y){
 	out_wire = entity.get_out_wire();
 
 	int num = entity.get_entry_amount();
-	for (int i = 0; i < num; i++)
-		if (in_wires[i] != -1)
-			if (valid_two_lines_are_same(in_wires[i], wire_array[in_wires[i]].get_lines_amount() - 2))
-				return false;
-	if (out_wire != -1)
-		if (valid_two_lines_are_same(out_wire, 0))
-			return false;
-
 	int x0, y0, x1, y1, x2, y2;
 	for (int i = 0; i < num; i++) {
 		if (in_wires[i] != -1) {
@@ -210,6 +202,20 @@ void autocorrect_wire_end(int X, int Y) {
 		}
 	}
 
+}
+
+bool reduce_doubling_lines(int i) {
+	if (i != 0) {
+		if (move_line_buffer[i][0] == move_line_buffer[i][2] && move_line_buffer[i][1] != move_line_buffer[i][3]) {
+			if (move_line_buffer[i - 1][1] != move_line_buffer[i - 1][3])
+				return true;
+		}
+		else if (move_line_buffer[i][1] == move_line_buffer[i][3] && move_line_buffer[i][0] != move_line_buffer[i][2]) {
+			if (move_line_buffer[i - 1][0] != move_line_buffer[i - 1][2])
+				return true;
+		}
+	}
+	return false;
 }
 
 void decrease_wires_index(int index){

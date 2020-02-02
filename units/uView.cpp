@@ -259,6 +259,25 @@ void detect_closest_guides(TPaintBox *pb, int target_comp) {
 	}
 }
 
+void attract_to_guides(int *x_comp, int *y_comp) {
+	bool x_corrected = false;
+	bool y_corrected = false;
+	for (int i = 0 ; i < guides_pos; i++) {
+		if (guides[i][0] == guides[i][2]) {
+			if (abs(*x_comp - guides[i][0]) <= 2 * grid_width && !x_corrected) {
+				*x_comp = guides[i][0];
+				x_corrected = true;
+			}
+		}
+		if (guides[i][1] == guides[i][3]) {
+			if (abs(*y_comp - guides[i][1]) <= 2 * grid_width && !y_corrected) {
+				*y_comp = guides[i][1];
+				y_corrected = true;
+			}
+		}
+	}
+}
+
 
 
 

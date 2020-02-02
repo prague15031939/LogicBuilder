@@ -295,6 +295,10 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 					break;
 				}
 				if (valid_wire_middle(&X, &Y)) {
+					if (reduce_doubling_lines(move_line_buffer_pos)) {
+						current_wire_pos--;
+						move_line_buffer_pos--;
+					}
 					current_wire[current_wire_pos][2] = X;
 					current_wire[current_wire_pos][3] = Y;
 					current_wire_pos++;
@@ -728,8 +732,9 @@ void __fastcall TfrmMain::pbMainMouseUp(TObject *Sender, TMouseButton Button, TS
 		int x, y;
 		x = component_array[selected_comp].get_x();
 		y = component_array[selected_comp].get_y();
-        guides_pos = 0;
 		round_coords(&x, &y);
+		attract_to_guides(&x, &y);
+		guides_pos = 0;
 		if (valid_place(x, y, selected_comp)) {
 			component_array[selected_comp] = modify_component_position(component_array[selected_comp], x, y);
 			pbMain -> Invalidate();
