@@ -18,7 +18,7 @@ std::string fetch_component_name(std::string src);
 int find_start_component(int x0, int y0);
 void find_end_component(int end[2], int x0, int y0);
 void round_coords(int* X, int* Y);
-Component modify_component_position(Component entity, int new_x, int new_y);
+int modify_component_position(int selected_comp, int new_x, int new_y);
 
 //---------------------------------------------------------------------------
 #endif

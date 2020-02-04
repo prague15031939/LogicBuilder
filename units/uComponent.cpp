@@ -74,7 +74,7 @@ void delete_component(int target, char mode){
 		wire_array[out_wire].set_in_out_component(-1, wire_array[out_wire].get_out_component());
 		delete_in_component_in_all_connected_wires(out_wire);
 		if (mode == 't')
-	        delete_wire(out_wire, 't');
+			delete_wire(out_wire, 't');
 	}
 
 	for (int i = target; i < component_array_pos - 1; i++) {
@@ -85,12 +85,13 @@ void delete_component(int target, char mode){
 
 }
 
-Component modify_component_position(Component entity, int new_x, int new_y){
+int modify_component_position(int selected_comp, int new_x, int new_y){
 
+	Component entity = component_array[selected_comp];
 	int out_wire = entity.get_out_wire();
 	if (out_wire != -1)
 		if (!valid_line_is_alone(out_wire, 0))
-			return entity;
+			return 1;
 
 	int in_wires[4] = {-1, -1, -1, -1};
 	entity.get_in_wires(in_wires);
@@ -98,13 +99,13 @@ Component modify_component_position(Component entity, int new_x, int new_y){
 	for (int i = 0; i < num; i++)
 		if (in_wires[i] != -1)
 			if (!valid_line_is_alone(in_wires[i], wire_array[in_wires[i]].get_lines_amount() - 1))
-				return entity;
+				return 1;
 
 	if (!valid_component_can_move(entity, new_x - entity.get_x(), new_y - entity.get_y()))
-		return entity;
+		return 1;
 
 	if (!pull_connected_wires(entity, new_x, new_y))
-		return entity;
+		return 1;
 
 	entity.set_coords(new_x, new_y);
 	entity.set_out_x(new_x + comp_width + wire_length);
@@ -116,7 +117,8 @@ Component modify_component_position(Component entity, int new_x, int new_y){
 		in_y[i] = new_y + entry_coords[num - 1][i];
 	entity.set_in_y(in_y);
 
-	return entity;
+	component_array[selected_comp] = entity;
+	return 0;
 }
 
 std::string fetch_component_name(std::string src){

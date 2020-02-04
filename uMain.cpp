@@ -1,5 +1,3 @@
-//---------------------------------------------------------------------------
-
 #include <vcl.h>
 #pragma hdrstop
 
@@ -11,11 +9,11 @@
 #include "uModelMode.h"
 #include "uCommon.h"
 
-//---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
 TfrmMain *frmMain;
 
+extern Stack stack;
 extern Component component_array[100];
 extern ModelComponent model_component_array[100];
 extern int component_array_pos;
@@ -36,6 +34,8 @@ extern int entry_coords[4][4];
 extern int move_step;
 extern int x_start_move, y_start_move;
 extern int picked_line_num;
+extern int start_coords[4];
+extern bool was_moved;
 extern bool cursor_mode;
 extern bool model_mode;
 extern bool wire_mode;
@@ -51,12 +51,13 @@ extern int guides_pos;
 
 extern std::string file_dir;
 extern bool to_draw_grid;
-//---------------------------------------------------------------------------
+
 __fastcall TfrmMain::TfrmMain(TComponent* Owner)
 	: TForm(Owner)
 {
 }
 
+//------------------------------------file system-------------------------------
 
 void open_file(std::string src){
    ifstream file_obj;
@@ -75,6 +76,8 @@ void open_file(std::string src){
    }
    file_obj.close();
 
+   stack.clear();
+   stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
 }
 
 void save_to_file(std::string dest){
@@ -191,6 +194,328 @@ void logger(){
 	file_obj.close();
 }
 
+//-------------------------file buttons(main menu)------------------------------
+
+void __fastcall TfrmMain::actNewFileExecute(TObject *Sender)
+{
+	Save1 -> Enabled = false;
+	Saveas1 -> Enabled = false;
+	frmMain -> Caption = "LogicBuilder";
+
+	component_array_pos = 0;
+	current_component = "";
+
+	wire_array_pos = 0;
+	current_wire_pos = 0;
+	wire_stage = wsBegin;
+
+	x_dot_highlight = -1;
+	y_dot_highlight = -1;
+
+	cursor_mode = true;
+	wire_mode = false;
+	move_line_buffer_pos = 0;
+	selected_comp = -1;
+	selected_wire = -1;
+	file_dir = "";
+
+	stack.clear();
+	stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
+
+	pbMain -> Invalidate();
+}
+
+void __fastcall TfrmMain::actOpenFileExecute(TObject *Sender)
+{
+	if (OpenDialog -> Execute()) {
+		file_dir = AnsiString(OpenDialog -> FileName).c_str();
+		open_file(file_dir);
+		frmMain -> Caption = ("LogicBuilder - " + file_dir).c_str();
+		Save1 -> Enabled = true;
+		selected_comp = -1;
+		selected_wire = -1;
+		current_component = "";
+		cursor_mode = true;
+		pbMain -> Invalidate();
+	}
+}
+
+void __fastcall TfrmMain::actSaveFileExecute(TObject *Sender)
+{
+	if (file_dir != "") {
+		save_to_file(file_dir);
+		Save1 -> Enabled = false;
+	}
+}
+
+void __fastcall TfrmMain::actSaveFileAsExecute(TObject *Sender)
+{
+	if (SaveDialog -> Execute()) {
+		file_dir = AnsiString(SaveDialog -> FileName).c_str();
+		char temp[200];
+		file_dir.copy(temp, 3, file_dir.length() - 3);
+		if (!(temp[0] == '.' && temp[1] == 'l' && temp[2] == 'b'))
+			file_dir += ".lb";
+		save_to_file(file_dir);
+		frmMain -> Caption = ("LogicBuilder - " + file_dir).c_str();
+		Save1 -> Enabled = true;
+	}
+}
+
+void __fastcall TfrmMain::actSVGExportExecute(TObject *Sender)
+{
+	if (SaveDialog -> Execute()) {
+		file_dir = AnsiString(SaveDialog -> FileName).c_str();
+		to_svg(file_dir);
+	}
+}
+
+void __fastcall TfrmMain::actExitExecute(TObject *Sender)
+{
+	frmMain -> Close();
+}
+
+//--------------------------------form handlers--------------------------------
+
+void __fastcall TfrmMain::FormCreate(TObject *Sender)
+{
+	Save1 -> Enabled = false;
+	Saveas1 -> Enabled = false;
+	OpenDialog -> Filter = "LogicBuilder files(.lb)|*.lb|";
+	move_step = grid_width;
+	stack.init_stack();
+	stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
+	frmMain -> DoubleBuffered = true;
+	pbMain -> Invalidate();
+}
+
+void __fastcall TfrmMain::lboxComponentsDblClick(TObject *Sender)
+{
+	if (!model_mode) {
+		current_component = AnsiString(lboxComponents -> Items -> Strings[lboxComponents -> ItemIndex]).c_str();
+		cursor_mode = false;
+		selected_comp = -1;
+		selected_wire = -1;
+		pbMain -> Invalidate();
+	}
+}
+
+void __fastcall TfrmMain::pbMainPaint(TObject *Sender)
+{
+	if (to_draw_grid)
+		draw_grid(pbMain);
+	if (!model_mode)
+		for (int i = 0; i < component_array_pos; i++)
+			draw_component(pbMain, component_array[i]);
+	else
+		for (int i = 0; i < component_array_pos; i++)
+			draw_model_component(pbMain, i);
+	if (selected_comp != -1) {
+		draw_highlight(pbMain, selected_comp);
+	}
+	if (x_dot_highlight != -1 && y_dot_highlight != -1) {
+		draw_dot_highlight(pbMain, x_dot_highlight, y_dot_highlight);
+	}
+	for (int i = 0; i < wire_array_pos; i++) {
+		draw_wire(pbMain, wire_array[i], 'd');
+	}
+	if (selected_wire != -1) {
+		draw_wire_highlight(pbMain, selected_wire);
+	}
+	if (wire_mode && wire_stage != wsBegin) {
+		draw_temp_lines(pbMain);
+	}
+	if (cursor_mode && selected_comp != -1) {
+		draw_guides(pbMain);
+	}
+}
+
+//------------------------------control handlers-------------------------------
+
+void __fastcall TfrmMain::actTakeCursorExecute(TObject *Sender)
+{
+	cursor_mode = true;
+	wire_mode = false;
+	move_line_buffer_pos = 0;
+	current_wire_pos = 0;
+	wire_stage = wsBegin;
+	branch_wire_mode = false;
+	current_component = "";
+	logger();
+	pbMain -> Invalidate();
+}
+
+void __fastcall TfrmMain::actSetWireModeExecute(TObject *Sender)
+{
+	wire_mode = true;
+	branch_wire_mode = false;
+	move_line_buffer_pos = 0;
+	current_wire_pos = 0;
+	wire_stage = wsBegin;
+	cursor_mode = false;
+	current_component = "";
+}
+
+void __fastcall TfrmMain::actEndWireExecute(TObject *Sender)
+{
+	if (wire_mode)
+		wire_stage = wsEnd;
+}
+
+void __fastcall TfrmMain::actBranchWireExecute(TObject *Sender)
+{
+	wire_mode = true;
+	branch_wire_mode = true;
+	wire_stage = wsBegin;
+	move_line_buffer_pos = 0;
+	current_wire_pos = 0;
+	cursor_mode = false;
+	current_component = "";
+}
+
+void __fastcall TfrmMain::actSetModelModeExecute(TObject *Sender)
+{
+	model_mode = model_mode ? false : true;
+	cursor_mode = model_mode ? false : true;
+	wire_mode = false;
+	branch_wire_mode = false;
+	current_component = "";
+	move_line_buffer_pos = 0;
+
+	if (model_mode){
+		init_model_array();
+		if (model_scheme() == 1){
+			cursor_mode = true;
+			model_mode = false;
+			Application -> MessageBox(L"Undefined behaviour", L"LogicBuilder", MB_OK | MB_ICONERROR);
+		}
+	}
+
+	pbMain -> Invalidate();
+}
+
+void __fastcall TfrmMain::actDrawGridExecute(TObject *Sender)
+{
+	to_draw_grid = to_draw_grid ? false : true;
+	pbMain -> Invalidate();
+}
+
+//----------------------another control handlers--------------------------------
+
+void __fastcall TfrmMain::actUndoExecute(TObject *Sender)
+{
+	if (cursor_mode || current_component != "") {
+		stack.pop(&component_array_pos, component_array, &wire_array_pos, wire_array);
+		selected_comp = -1;
+		selected_wire = -1;
+		move_line_buffer_pos = 0;
+		current_wire_pos = 0;
+		pbMain -> Invalidate();
+	}
+}
+
+void __fastcall TfrmMain::actDeleteComponentExecute(TObject *Sender)
+{
+	if (selected_comp != -1) {
+		delete_component(selected_comp, 'd');
+		stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
+		frmMain -> Saveas1 -> Enabled = true;
+		selected_comp = -1;
+	}
+	if (selected_wire != -1) {
+		delete_wire(selected_wire, 'd');
+		stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
+		frmMain -> Saveas1 -> Enabled = true;
+		selected_wire = -1;
+	}
+	cursor_mode = true;
+	current_component = "";
+	pbMain -> Invalidate();
+}
+
+void __fastcall TfrmMain::actDeleteObjectTreeExecute(TObject *Sender)
+{
+	if (selected_comp != -1) {
+		delete_component(selected_comp, 't');
+		stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
+		frmMain -> Saveas1 -> Enabled = true;
+		selected_comp = -1;
+	}
+	if (selected_wire != -1) {
+		delete_wire(selected_wire, 't');
+		stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
+		frmMain -> Saveas1 -> Enabled = true;
+		selected_wire = -1;
+	}
+	cursor_mode = true;
+	current_component = "";
+	pbMain -> Invalidate();
+}
+
+//--------------------------movement (WASD)-------------------------------------
+
+void __fastcall TfrmMain::actMoveUpExecute(TObject *Sender)
+{
+	if (selected_comp != -1) {
+		int x, y;
+		x = component_array[selected_comp].get_x();
+		y = component_array[selected_comp].get_y();
+		if (valid_place(x, y - move_step, selected_comp)) {
+			int code = modify_component_position(selected_comp, x, y - move_step);
+			if (code == 0)
+				stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
+			pbMain -> Invalidate();
+		}
+	}
+}
+
+void __fastcall TfrmMain::actMoveDownExecute(TObject *Sender)
+{
+	if (selected_comp != -1) {
+		int x, y;
+		x = component_array[selected_comp].get_x();
+		y = component_array[selected_comp].get_y();
+		if (valid_place(x, y + move_step, selected_comp)) {
+			int code = modify_component_position(selected_comp,	x, y + move_step);
+            if (code == 0)
+				stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
+			pbMain -> Invalidate();
+		}
+	}
+}
+
+void __fastcall TfrmMain::actMoveLeftExecute(TObject *Sender)
+{
+	if (selected_comp != -1) {
+		int x, y;
+		x = component_array[selected_comp].get_x();
+		y = component_array[selected_comp].get_y();
+		if (valid_place(x - move_step, y, selected_comp)) {
+			int code = modify_component_position(selected_comp,	x - move_step, y);
+			if (code == 0)
+				stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
+			pbMain -> Invalidate();
+		}
+	}
+}
+
+void __fastcall TfrmMain::actMoveRightExecute(TObject *Sender)
+{
+	if (selected_comp != -1) {
+		int x, y;
+		x = component_array[selected_comp].get_x();
+		y = component_array[selected_comp].get_y();
+		if (valid_place(x + move_step, y, selected_comp)) {
+			int code = modify_component_position(selected_comp,	x + move_step, y);
+			if (code == 0)
+				stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
+			pbMain -> Invalidate();
+		}
+	}
+}
+
+//----------------------------------mouse handlers------------------------------
+
 void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, TShiftState Shift,
 		  int X, int Y)
 {
@@ -198,6 +523,7 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 		round_coords(&X, &Y);
 		if (valid_place(X, Y, -1)) {
 			add_component(X, Y);
+			stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
 			selected_comp = component_array_pos - 1;
 			frmMain -> Saveas1 -> Enabled = true;
 			pbMain -> Invalidate();
@@ -236,14 +562,17 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 			pbMain -> Invalidate();
 			selected_wire = -1;
 		}
+		was_moved = false;
 		for (int i = 0; i < component_array_pos; i++) {
 			int X0, Y0;
 			X0 = component_array[i].get_x();
 			Y0 = component_array[i].get_y();
 			if (X >= X0 && X <= X0 + comp_width && Y >= Y0 && Y <= Y0 + comp_height) {
 				selected_comp = i;
-                detect_closest_guides(pbMain, selected_comp);
+				detect_closest_guides(pbMain, selected_comp);
 				if (Shift.Contains(ssLeft)) {
+					start_coords[0] = X0;
+					start_coords[1] = Y0;
 					x_start_move = X;
 					y_start_move = Y;
 				}
@@ -261,6 +590,10 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 					(X >= lines[j][0] && X <= lines[j][2] || X <= lines[j][0] && X >= lines[j][2]))) {
 					selected_wire = i;
 					if (Shift.Contains(ssLeft)) {
+						start_coords[0] = lines[j][0];
+						start_coords[1] = lines[j][1];
+						start_coords[2] = lines[j][2];
+						start_coords[3] = lines[j][3];
 						x_start_move = X;
 						y_start_move = Y;
 						picked_line_num = j;
@@ -321,6 +654,7 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 					current_wire[current_wire_pos][3] = Y;
 
 					add_wire(current_wire);
+                    stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
 					current_wire_pos = 0;
 					wire_stage = wsBegin;
 					pbMain -> Invalidate();
@@ -330,238 +664,6 @@ void __fastcall TfrmMain::pbMainMouseDown(TObject *Sender, TMouseButton Button, 
 		}
 	}
 }
-
-void __fastcall TfrmMain::pbMainPaint(TObject *Sender)
-{
-	if (to_draw_grid)
-		draw_grid(pbMain);
-	if (!model_mode)
-		for (int i = 0; i < component_array_pos; i++)
-			draw_component(pbMain, component_array[i]);
-	else
-		for (int i = 0; i < component_array_pos; i++)
-			draw_model_component(pbMain, i);
-	if (selected_comp != -1) {
-		draw_highlight(pbMain, selected_comp);
-	}
-	if (x_dot_highlight != -1 && y_dot_highlight != -1) {
-		draw_dot_highlight(pbMain, x_dot_highlight, y_dot_highlight);
-	}
-	for (int i = 0; i < wire_array_pos; i++) {
-		draw_wire(pbMain, wire_array[i], 'd');
-	}
-	if (selected_wire != -1) {
-		draw_wire_highlight(pbMain, selected_wire);
-	}
-	if (wire_mode && wire_stage != wsBegin) {
-		draw_temp_lines(pbMain);
-	}
-	if (cursor_mode && selected_comp != -1) {
-		draw_guides(pbMain);
-	}
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::FormCreate(TObject *Sender)
-{
-	Save1 -> Enabled = false;
-	Saveas1 -> Enabled = false;
-	OpenDialog -> Filter = "LogicBuilder files(.lb)|*.lb|";
-	move_step = grid_width;
-	frmMain -> DoubleBuffered = true;
-	pbMain -> Invalidate();
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::lboxComponentsDblClick(TObject *Sender)
-{
-	if (!model_mode) {
-        current_component = AnsiString(lboxComponents -> Items -> Strings[lboxComponents -> ItemIndex]).c_str();
-		cursor_mode = false;
-		selected_comp = -1;
-		selected_wire = -1;
-		pbMain -> Invalidate();
-	}
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::actTakeCursorExecute(TObject *Sender)
-{
-	cursor_mode = true;
-	wire_mode = false;
-	move_line_buffer_pos = 0;
-	branch_wire_mode = false;
-	current_component = "";
-	logger();
-    pbMain -> Invalidate();
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::actMoveUpExecute(TObject *Sender)
-{
-	if (selected_comp != -1) {
-		int x, y;
-		x = component_array[selected_comp].get_x();
-		y = component_array[selected_comp].get_y();
-		if (valid_place(x, y - move_step, selected_comp)) {
-			component_array[selected_comp] = modify_component_position(component_array[selected_comp],
-				x, y - move_step);
-			pbMain -> Invalidate();
-		}
-	}
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::actMoveDownExecute(TObject *Sender)
-{
-	if (selected_comp != -1) {
-		int x, y;
-		x = component_array[selected_comp].get_x();
-		y = component_array[selected_comp].get_y();
-		if (valid_place(x, y + move_step, selected_comp)) {
-			component_array[selected_comp] = modify_component_position(component_array[selected_comp],
-				x, y + move_step);
-			pbMain -> Invalidate();
-		}
-	}
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::actMoveLeftExecute(TObject *Sender)
-{
-	if (selected_comp != -1) {
-		int x, y;
-		x = component_array[selected_comp].get_x();
-		y = component_array[selected_comp].get_y();
-		if (valid_place(x - move_step, y, selected_comp)) {
-			component_array[selected_comp] = modify_component_position(component_array[selected_comp],
-				x - move_step, y);
-			pbMain -> Invalidate();
-		}
-	}
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::actMoveRightExecute(TObject *Sender)
-{
-	if (selected_comp != -1) {
-		int x, y;
-		x = component_array[selected_comp].get_x();
-		y = component_array[selected_comp].get_y();
-		if (valid_place(x + move_step, y, selected_comp)) {
-			component_array[selected_comp] = modify_component_position(component_array[selected_comp],
-				x + move_step, y);
-			pbMain -> Invalidate();
-		}
-	}
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::actDeleteComponentExecute(TObject *Sender)
-{
-	if (selected_comp != -1) {
-		delete_component(selected_comp, 'd');
-		frmMain -> Saveas1 -> Enabled = true;
-		selected_comp = -1;
-	}
-	if (selected_wire != -1) {
-		delete_wire(selected_wire, 'd');
-		frmMain -> Saveas1 -> Enabled = true;
-		selected_wire = -1;
-	}
-	cursor_mode = true;
-	current_component = "";
-	pbMain -> Invalidate();
-}
-
-void __fastcall TfrmMain::actDeleteObjectTreeExecute(TObject *Sender)
-{
-	if (selected_comp != -1) {
-		delete_component(selected_comp, 't');
-		frmMain -> Saveas1 -> Enabled = true;
-		selected_comp = -1;
-	}
-	if (selected_wire != -1) {
-		delete_wire(selected_wire, 't');
-		frmMain -> Saveas1 -> Enabled = true;
-		selected_wire = -1;
-	}
-	cursor_mode = true;
-	current_component = "";
-	pbMain -> Invalidate();
-}
-
-void __fastcall TfrmMain::actSaveFileExecute(TObject *Sender)
-{
-	if (file_dir != "") {
-		save_to_file(file_dir);
-		Save1 -> Enabled = false;
-	}
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::actOpenFileExecute(TObject *Sender)
-{
-	if (OpenDialog -> Execute()) {
-		file_dir = AnsiString(OpenDialog -> FileName).c_str();
-		open_file(file_dir);
-		frmMain -> Caption = ("LogicBuilder - " + file_dir).c_str();
-		Save1 -> Enabled = true;
-		selected_comp = -1;
-		selected_wire = -1;
-		current_component = "";
-		cursor_mode = true;
-		pbMain -> Invalidate();
-	}
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::actSaveFileAsExecute(TObject *Sender)
-{
-	if (SaveDialog -> Execute()) {
-		file_dir = AnsiString(SaveDialog -> FileName).c_str();
-		char temp[200];
-		file_dir.copy(temp, 3, file_dir.length() - 3);
-		if (!(temp[0] == '.' && temp[1] == 'l' && temp[2] == 'b'))
-			file_dir += ".lb";
-		save_to_file(file_dir);
-		frmMain -> Caption = ("LogicBuilder - " + file_dir).c_str();
-		Save1 -> Enabled = true;
-	}
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::actSVGExportExecute(TObject *Sender)
-{
-	if (SaveDialog -> Execute()) {
-		file_dir = AnsiString(SaveDialog -> FileName).c_str();
-		to_svg(file_dir);
-	}
-}
-
-void __fastcall TfrmMain::actExitExecute(TObject *Sender)
-{
-	frmMain -> Close();
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::actSetWireModeExecute(TObject *Sender)
-{
-	wire_mode = true;
-	branch_wire_mode = false;
-	move_line_buffer_pos = 0;
-	wire_stage = wsBegin;
-	cursor_mode = false;
-	current_component = "";
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::actEndWireExecute(TObject *Sender)
-{
-	if (wire_mode)
-		wire_stage = wsEnd;
-}
-//---------------------------------------------------------------------------
 
 void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, int X,
 		  int Y)
@@ -612,7 +714,9 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 		y = component_array[selected_comp].get_y() + Y - y_start_move;
 		detect_closest_guides(pbMain, selected_comp);
 		if (valid_place(x, y, selected_comp)) {
-			component_array[selected_comp] = modify_component_position(component_array[selected_comp], x, y);
+			int code = modify_component_position(selected_comp, x, y);
+			if (code == 0)
+				was_moved = true;
 			x_start_move = X;
 			y_start_move = Y;
 			pbMain -> Invalidate();
@@ -627,7 +731,8 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 		wire_array[selected_wire].get_lines(lines);
 		int i = picked_line_num;
 
-		if (valid_line_is_alone(selected_wire, picked_line_num) && (i != 0 || i == 0 && wire_array[selected_wire].get_parent_wire() != -1) && i != wire_array[selected_wire].get_lines_amount() - 1) {
+		if (valid_line_is_alone(selected_wire, picked_line_num) && (i != 0 || i == 0 && wire_array[selected_wire].get_parent_wire() != -1) && i != wire_array[selected_wire].get_lines_amount() - 1 &&
+			(dx != 0 || dy != 0)) {
 			if (lines[i][1] == lines[i][3] && lines[i][0] != lines[i][2]) {
 				if ((i != 0 || i == 0 && wire_array[selected_wire].get_parent_wire() != -1 && valid_wire_start_can_move(selected_wire, dy)) && valid_line_can_move(selected_wire, i, lines, dy)) {
 					lines[i][1] += dy;
@@ -649,81 +754,12 @@ void __fastcall TfrmMain::pbMainMouseMove(TObject *Sender, TShiftState Shift, in
 			wire_array[selected_wire].set_lines(lines);
 			x_start_move = X;
 			y_start_move = Y;
+			was_moved = true;
 			pbMain -> Invalidate();
 		}
 	}
 
 }
-//---------------------------------------------------------------------------
-
-
-void __fastcall TfrmMain::actNewFileExecute(TObject *Sender)
-{
-	Save1 -> Enabled = false;
-	Saveas1 -> Enabled = false;
-	frmMain -> Caption = "LogicBuilder";
-
-	component_array_pos = 0;
-	current_component = "";
-
-	wire_array_pos = 0;
-	current_wire_pos = 0;
-	wire_stage = wsBegin;
-
-	x_dot_highlight = -1;
-	y_dot_highlight = -1;
-
-	cursor_mode = true;
-	wire_mode = false;
-	move_line_buffer_pos = 0;
-	selected_comp = -1;
-	selected_wire = -1;
-	file_dir = "";
-
-	pbMain -> Invalidate();
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::actBranchWireExecute(TObject *Sender)
-{
-	wire_mode = true;
-	branch_wire_mode = true;
-	wire_stage = wsBegin;
-	move_line_buffer_pos = 0;
-	cursor_mode = false;
-	current_component = "";
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::actDrawGridExecute(TObject *Sender)
-{
-	to_draw_grid = to_draw_grid ? false : true;
-	pbMain -> Invalidate();
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TfrmMain::actSetModelModeExecute(TObject *Sender)
-{
-	model_mode = model_mode ? false : true;
-	cursor_mode = model_mode ? false : true;
-	wire_mode = false;
-	branch_wire_mode = false;
-	current_component = "";
-	move_line_buffer_pos = 0;
-
-	if (model_mode){
-		init_model_array();
-		if (model_scheme() == 1){
-			cursor_mode = true;
-			model_mode = false;
-			Application -> MessageBox(L"Undefined behaviour", L"LogicBuilder", MB_OK | MB_ICONERROR);
-		}
-
-	}
-
-	pbMain -> Invalidate();
-}
-//---------------------------------------------------------------------------
 
 void __fastcall TfrmMain::pbMainMouseUp(TObject *Sender, TMouseButton Button, TShiftState Shift,
 		  int X, int Y)
@@ -735,10 +771,20 @@ void __fastcall TfrmMain::pbMainMouseUp(TObject *Sender, TMouseButton Button, TS
 		round_coords(&x, &y);
 		attract_to_guides(&x, &y);
 		guides_pos = 0;
-		if (valid_place(x, y, selected_comp)) {
-			component_array[selected_comp] = modify_component_position(component_array[selected_comp], x, y);
-			pbMain -> Invalidate();
+		if (was_moved && valid_place(x, y, selected_comp)) {
+			int code = modify_component_position(selected_comp, x, y);
+			if (code == 0 && (start_coords[0] != component_array[selected_comp].get_x() ||
+				start_coords[1] != component_array[selected_comp].get_y()))
+				stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
 		}
+		pbMain -> Invalidate();
+	}
+	if (selected_wire != -1 && picked_line_num != -1 && cursor_mode && was_moved) {
+		int lines[10][4];
+		wire_array[selected_wire].get_lines(lines);
+		if (start_coords[0] != lines[picked_line_num][0] || start_coords[1] != lines[picked_line_num][1] ||
+			start_coords[2] != lines[picked_line_num][2] || start_coords[3] != lines[picked_line_num][3])
+			stack.push(component_array_pos, component_array, wire_array_pos, wire_array);
 	}
 }
 

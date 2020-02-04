@@ -3,6 +3,7 @@
 #pragma hdrstop
 #include "uCommon.h"
 
+Stack stack;
 Component component_array[100];
 ModelComponent model_component_array[100];
 int component_array_pos = 0;
@@ -25,6 +26,8 @@ int y_dot_highlight = -1;
 int move_step;
 int x_start_move, y_start_move;
 int picked_line_num = -1;
+int start_coords[4];
+bool was_moved;
 bool cursor_mode = true;
 bool model_mode = false;
 bool wire_mode = false;

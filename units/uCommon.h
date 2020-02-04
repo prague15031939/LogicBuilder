@@ -222,5 +222,70 @@ private:
 	int parent_line_num;
 };
 
+class Echelon {
+public:
+	Echelon *ptrNext;
+	int c_array_pos;
+	Component c_array[100];
+	int w_array_pos;
+	Wire w_array[300];
+};
+
+class Stack {
+public:
+	void init_stack() {
+		this->top = NULL;
+	}
+	void push(int component_array_pos, Component *component_array, int wire_array_pos, Wire *wire_array) {
+		Echelon *entity = new Echelon;
+		entity->c_array_pos = component_array_pos;
+		for (int i = 0; i < entity->c_array_pos; i++)
+			entity->c_array[i] = component_array[i];
+		entity->w_array_pos = wire_array_pos;
+		for (int i = 0; i < entity->w_array_pos; i++)
+			entity->w_array[i] = wire_array[i];
+		entity->ptrNext = top;
+		this->top = entity;
+		this->control_bottom();
+	}
+	void pop(int *component_array_pos, Component *component_array, int *wire_array_pos, Wire *wire_array) {
+		if (this->top != NULL && this->top->ptrNext != NULL) {
+			Echelon *entity = this->top->ptrNext;
+			*component_array_pos = entity->c_array_pos;
+			for (int i = 0; i < *component_array_pos; i++)
+				component_array[i] = entity->c_array[i];
+			*wire_array_pos = entity->w_array_pos;
+			for (int i = 0; i < *wire_array_pos; i++)
+				wire_array[i] = entity->w_array[i];
+			delete this->top;
+			this->top = entity;
+		}
+	}
+	void clear() {
+		while (this->top != NULL) {
+			Echelon *entity = this->top->ptrNext;
+			delete this->top;
+			this->top = entity;
+		}
+	}
+
+private:
+	Echelon *top;
+
+	void control_bottom() {
+		int count = 0;
+		Echelon *ptr = this->top;
+		while (ptr->ptrNext != NULL && count <= 10) {
+			if (count == 10) {
+				delete ptr->ptrNext;
+				ptr->ptrNext = NULL;
+				break;
+			}
+			ptr = ptr->ptrNext;
+			count++;
+		}
+	}
+};
+
 //---------------------------------------------------------------------------
 #endif

@@ -269,6 +269,12 @@ object frmMain: TfrmMain
       ShortCut = 8238
       OnExecute = actDeleteObjectTreeExecute
     end
+    object actUndo: TAction
+      Category = 'Control'
+      Caption = 'actUndo'
+      ShortCut = 16474
+      OnExecute = actUndoExecute
+    end
   end
   object SaveDialog: TSaveDialog
     Left = 304
